@@ -1,8 +1,29 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 import os
 from werkzeug.utils import secure_filename
-
 app = Flask(__name__)
+
+questions = {
+    "Question1": "Question1",
+    "Question2": "Question2",
+    "Question3": "Question3",
+    "Steps" : 2,
+    "Voice" : "Voice"
+}
+
+@app.route("/Fambot", methods=['GET', 'POST'])
+def handle_questions():
+    if request.method == 'GET':
+        return jsonify(questions)
+    elif request.method == 'POST':
+        data = request.get_json()
+
+        # Update existing questions with new values
+        for key in data:
+            if key in questions:
+                questions[key] = data[key]
+
+        return jsonify(questions), 200
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -43,7 +64,5 @@ def upload_image():
 @app.route('/uploads/<filename>', methods=['GET'])
 def get_image(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8888, debug=True)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8888)
