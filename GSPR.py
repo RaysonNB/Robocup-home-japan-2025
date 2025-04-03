@@ -48,6 +48,9 @@ if __name__ == "__main__":
     location2 = {"starting point":(0,0,0),"exit":(0,0,0),"host":(0,0,0),
                  "dinning room":(0,0,0),"living room":(0,0,0),
                  "hallway":(0,0,0), "dinning_room":(0,0,0),"living_room":(0,0,0)}
+    #Step 0 first send
+    #Step 1 first get
+    #Step 7 get image answer
     for i in range(3):
         s1 = input("The sentence is: ")
         #post question
@@ -82,13 +85,13 @@ if __name__ == "__main__":
         command_type=command_type.lower()
 
         #Manipulation1
-        if "Manipulation1" in command_type or ("Mani" in command_type and "1" in command_type):
+        if "manipulation1" in command_type or ("mani" in command_type and "1" in command_type):
             pass
         #Manipulation2
-        elif "Manipulation2" in command_type or ("Mani" in command_type and "2" in command_type):
+        elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
             pass
-        #Vision (Enumeration)1
-        elif "Vision (Enumeration)1" in command_type or ("Vision" in command_type and "1" in command_type):
+        #Vision
+        elif ("vision (enumeration)1" in command_type or ("vision" in command_type and "1" in command_type and "enume" in command_type)) or ("vision (enumeration)2" in command_type or ("vision" in command_type and "2" in command_type and "enume" in command_type)) or ("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type)) or ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
             #Move
             liyt=Q2.json
             num1,num2,num3=location1[liyt["$PLACE"]]
@@ -110,7 +113,7 @@ if __name__ == "__main__":
             with open(file_path, 'rb') as f:
                 files = {'image': (file_path.split('/')[-1], f)}
                 response = requests.post(url, files=files)
-
+                # remember to add the text question on the computer code
             print("Upload Status Code:", response.status_code)
             upload_result = response.json()
             print("sent image")
@@ -123,7 +126,6 @@ if __name__ == "__main__":
                     break
                 pass
                 time.sleep(2)
-            Q1 = dictt["Question1"]
             #back
             num1, num2, num3 = location2["starting point"]
             chassis.move_to(num1, num2, num3)
@@ -135,15 +137,6 @@ if __name__ == "__main__":
                     break
             time.sleep(1)
             clear_costmaps
-        #Vision (Enumeration)2
-        elif "Vision (Enumeration)2" in command_type or ("Vision" in command_type and "1" in command_type):
-            pass
-        #Vision (Description)1
-        elif "Vision (Description)1" in command_type or ("Vision" in command_type and "1" in command_type):
-            pass
-        #Vision (Description)2
-        elif "Vision (Description)2" in command_type or ("Mani" in command_type and "1" in command_type):
-            pass
         #Navigation1
         elif "Navigation1" in command_type or ("Mani" in command_type and "1" in command_type):
             pass
