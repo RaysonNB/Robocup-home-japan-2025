@@ -23,6 +23,7 @@ from std_srvs.srv import Empty
 from gtts import gTTS
 from playsound import playsound
 import requests
+import speech_recognition as sr
 import json
 import os
 # gemini2
@@ -83,9 +84,9 @@ def get_real_xyz(dp, x, y, num):
 def callback_voice(msg):
     global s
     s = msg.text
-def say(g):
+def speak(g):
     os.system(f'espeak "{g}"')
-    rospy.loginfo(g)
+    #rospy.loginfo(g)
     print(g)
 class FollowMe(object):
     def __init__(self) -> None:
@@ -228,6 +229,9 @@ def post_message_request(step,s1):
     response = requests.post(api_url, json=my_todo, timeout=2.5)
     result = response.json()
     return result
+def callback_voice(msg):
+    global s
+    s = msg.text
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
@@ -244,31 +248,65 @@ if __name__ == "__main__":
     location2 = {"starting point":(0,0,0),"exit":(0,0,0),"host":(0,0,0),
                  "dinning room":(0,0,0),"living room":(0,0,0),
                  "hallway":(0,0,0), "dinning_room":(0,0,0),"living_room":(0,0,0)}
-    chassis = RobotChassis()
-    clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+                 
+    #chassis = RobotChassis()
+    #clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     net_pose = HumanPoseEstimation(device_name="GPU")
     _fw = FollowMe()
     print("gemini2 rgb")
     _frame2 = None
-    _sub_down_cam_image = rospy.Subscriber("/cam1/color/image_raw", Image, callback_image2)
+    _sub_down_cam_image = rospy.Subscriber("/cam2/color/image_raw", Image, callback_image2)
     print("gemini2 depth")
     _depth2 = None
-    _sub_down_cam_depth = rospy.Subscriber("/cam1/depth/image_raw", Image, callback_depth2)
-    pre_s=s
-
+    _sub_down_cam_depth = rospy.Subscriber("/cam2/depth/image_raw", Image, callback_depth2)
     #step_action
     #add action for all code
     #Step 0 first send
     #Step 1 first get
     #Step 9 send image response text
     #step 10 get the image response
+    s = ""
+    rospy.Subscriber("/voice/text", Voice, callback_voice)
     for i in range(3):
         step_action = -1
-        s1 = input("The sentence is: ")
+        #s1 = input("The sentence is: ")
+        nigga=1
+        while True:
+            if nigga == 2: break
+            r = sr.Recognizer()
+            with sr.Microphone() as source:
+                # Voice introduction
+                speak("You have 10 seconds to speak your command. Begin after the countdown.")
+                print("Recording for 10 seconds... (Speak after countdown)")
+
+                # Countdown
+                speak("3")
+                speak("2")
+                speak("1")
+                speak("Speak now")
+
+                # Record for exactly 10 seconds
+                audio_text = r.record(source, duration=20)
+
+                speak("Recording complete")
+                #print("Recording complete")
+
+                try:
+                    # Recognize speech using Google Web Speech API
+                    recognized_text = r.recognize_google(audio_text)
+                    print("You said: " + recognized_text)
+                    speak("You said: " + recognized_text)
+                    nigga=2
+                except sr.UnknownValueError:
+                    error_msg = "Sorry, I could not understand what you said. please speak it again"
+                    print(error_msg)
+                    speak(error_msg)
+                    nigga=1
         # post question
-        gg = post_message_request(0,s1)  # step
+        gg = post_message_request(0,recognized_text)  # step
         print("post", gg)
         # get gemini answer
+        nigga=1
         while True:
             r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
             response_data = r.text
@@ -284,7 +322,7 @@ if __name__ == "__main__":
         print(Q2)
         print(Q3)
         # say how the robot understand
-        say(Q3[0])
+        speak(Q3[0])
         # divide
         command_type = Q1[0]
         command_type = command_type.lower()
@@ -292,19 +330,21 @@ if __name__ == "__main__":
         while not rospy.is_shutdown():
             # voice check
             # break
-            if s != "" and s != pre_s:
-                print(s)
-                pre_s = s
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
             rospy.Rate(10).sleep()
+            
+            cv2.imshow("frame", code_image)
+            key = cv2.waitKey(1)
+            if key in [ord('q'), 27]:
+                break
             '''
             #Manipulation1
             if "manipulation1" in command_type or ("mani" in command_type and "1" in command_type):
                 pass
             #Manipulation2
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
-                pass'''
+                pass
             #Vision
             if ("vision (enumeration)1" in command_type or ("vision" in command_type and "1" in command_type and "enume" in command_type)) or ("vision (enumeration)2" in command_type or ("vision" in command_type and "2" in command_type and "enume" in command_type)) or ("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type)) or ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
                 #Move
@@ -532,9 +572,6 @@ if __name__ == "__main__":
                 time.sleep(1)
                 clear_costmaps
             else:
-                say("I can't do it")
+                say("I can't do it")'''
 
-        cv2.imshow("frame", code_image)
-        key = cv2.waitKey(1)
-        if key in [ord('q'), 27]:
-            break
+        
