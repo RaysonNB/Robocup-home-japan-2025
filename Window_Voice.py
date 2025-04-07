@@ -9,10 +9,10 @@ def speak(text):
     engine.say(text)
     engine.runAndWait()
     print(text)
-def Voice_check():
-# Initialize speech recognizer
+nigga=1
+while True:
+    if nigga == 2: break
     r = sr.Recognizer()
-
     with sr.Microphone() as source:
         # Voice introduction
         speak("You have 10 seconds to speak your command. Begin after the countdown.")
@@ -35,10 +35,9 @@ def Voice_check():
             recognized_text = r.recognize_google(audio_text)
             print("You said: " + recognized_text)
             speak("You said: " + recognized_text)
+            nigga=2
         except sr.UnknownValueError:
-            error_msg = "Sorry, I could not understand what you said."
+            error_msg = "Sorry, I could not understand what you said. please speak it again"
             print(error_msg)
             speak(error_msg)
-
-
-Voice_check()
+            nigga=1
