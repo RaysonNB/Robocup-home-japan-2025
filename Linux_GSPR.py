@@ -26,13 +26,19 @@ import requests
 import speech_recognition as sr
 import json
 import os
+
+
 # gemini2
 def callback_image2(msg):
     global _frame2
     _frame2 = CvBridge().imgmsg_to_cv2(msg, "bgr8")
+
+
 def callback_depth2(msg):
     global _depth2
     _depth2 = CvBridge().imgmsg_to_cv2(msg, "passthrough")
+
+
 def get_real_xyz(dp, x, y, num):
     a1 = 49.5
     b1 = 60.0
@@ -81,13 +87,19 @@ def get_real_xyz(dp, x, y, num):
     real_y = round(y * 2 * d * np.tan(a / 2) / h)
     real_x = round(x * 2 * d * np.tan(b / 2) / w)
     return real_x, real_y, d
+
+
 def callback_voice(msg):
     global s
     s = msg.text
+
+
 def speak(g):
     os.system(f'espeak "{g}"')
-    #rospy.loginfo(g)
+    # rospy.loginfo(g)
     print(g)
+
+
 class FollowMe(object):
     def __init__(self) -> None:
         self.pre_x, self.pre_z = 0.0, 0.0
@@ -208,49 +220,175 @@ class FollowMe(object):
         self.pre_z = cur_z
 
         return cur_x, cur_z, frame, "yes"
+
+
 def move(forward_speed: float = 0, turn_speed: float = 0):
     global _cmd_vel
     msg = Twist()
     msg.linear.x = forward_speed
     msg.angular.z = turn_speed
     _cmd_vel.publish(msg)
-def find_walk_in_front(image,depth):
-    #finding
+
+
+def find_walk_in_front(image, depth):
+    # finding
     pass
+
+
 def answer_question():
     pass
-def post_message_request(step,s1):
+
+
+def post_message_request(step, s1,question):
     api_url = "http://192.168.50.147:8888/Fambot"
     my_todo = {"Question1": "None",
                "Question2": "None",
                "Question3": "None",
                "Steps": step,
-               "Voice": s1}
+               "Voice": s1,
+               "Questionasking":question,
+               "answer":"None"}
     response = requests.post(api_url, json=my_todo, timeout=2.5)
     result = response.json()
     return result
+
+
 def callback_voice(msg):
     global s
     s = msg.text
+
+
+
+def recognize_speech(duration):
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        audio_data = recognizer.record(source, duration=duration)
+        try:
+            return recognizer.recognize_google(audio_data).lower()
+        except sr.UnknownValueError:
+            return None
+
+
+def confirm_recording(original_text):
+    while True:  # Keep asking until we get a "yes"
+        speak(f"Did you say: {original_text}?")
+        speak("Please answer hello fambot 'yes' or 'no' after the sound")
+        time.sleep(1)
+        playsound("nigga2.mp3")
+        response = recognize_speech(5)
+
+        if response is None:
+            speak("Sorry, I didn't catch that. Let's try again.")
+            continue
+
+        print(f"You responded: {response}")
+
+        if "yes" in response:
+            return True
+        elif "no" in response:
+            return False
+        else:
+            speak("I didn't understand your answer. Please say 'yes' or 'no'.")
+
+
+def get_user_input():
+    while True:
+        # Voice introduction
+        speak("Hi, I am fambot. How can I help you? Speak after the")
+        playsound("nigga2.mp3")  # Changed sound file name
+        speak("sound, please wait a few seconds to start")
+
+        # Countdown
+        time.sleep(1)
+        playsound("nigga2.mp3")
+
+        user_text = recognize_speech(10)
+
+        if not user_text:
+            error_msg = "Sorry, I couldn't understand. Please try again."
+            print(error_msg)
+            speak(error_msg)
+            continue
+
+        print(f"You said: {user_text}")
+        #speak(f"You said: {user_text}")
+        user_text=user_text.replace("facebook","fambot")
+        if confirm_recording(user_text):
+            return user_text
+        else:
+            speak("Let's try recording again.")
+
+    return None
+def ask_question(question):
+    while True:
+        # Voice introduction
+        speak("Dear Guest")
+        speak(question)
+        speak("please speak the entire sentence, for example my name is Fambot")
+        speak("speak after the")
+        playsound("nigga2.mp3")  # Changed sound file name
+        speak("sound, please wait for a few seconds to start")
+
+        # Countdown
+        time.sleep(1)
+        playsound("nigga2.mp3")
+
+        user_text = recognize_speech(5)
+
+        if not user_text:
+            error_msg = "Sorry, I couldn't understand. Please try again."
+            print(error_msg)
+            speak(error_msg)
+            continue
+
+        print(f"You said: {user_text}")
+        #speak(f"You said: {user_text}")
+        user_text=user_text.replace("facebook","fambot")
+        if confirm_recording(user_text):
+            return user_text
+        else:
+            speak("Let's try recording again.")
+
+    return None
+def find_person(frame,pose):
+    detections = dnn_yolo.forward(frame)[0]["det"]
+    for i, detection in enumerate(detections):
+        # print(detection)
+        x1, y1, x2, y2, score, class_id = map(int, detection)
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        score = detection[4]
+        if class_id == 0 and score >= 0.55:
+            # print(cx,cy,"position bottle")
+            cx = min(cx, 640)
+            cy = min(cy, 480 - 1)
+            k2, kk1, kkkz = get_real_xyz(frame, cx, cy)
+            # print(float(score), class_id)
+            hhh = str(class_id) + " " + str(k2) + " " + str(kk1) + " " + str(kkkz)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
+            #capture
+            #gemini response
+
+
+    return frame
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
-    #open things
-    location1 = {"wall long":(0,0,0),"wall short":(0,0,0),
-                 "long table a":(0,0,0),"long table b":(0,0,0),
-                 "tall table":(0,0,0),"shelf":(0,0,0),
-                 "chair a":(0,0,0),"chair b":(0,0,0),
-                 "tray a":(0,0,0),"tray b":(0,0,0),
-                 "container":(0,0,0),"pen holder":(0,0,0),
-                 "trash bin a":(0,0,0),"trash bin b":(0,0,0),
-                 "storage box a":(0,0,0),"storage box b":(0,0,0)}
+    # open things
+    location1 = {"wall long": (0, 0, 0), "wall short": (0, 0, 0),
+                 "long table a": (0, 0, 0), "long table b": (0, 0, 0),
+                 "tall table": (0, 0, 0), "shelf": (0, 0, 0),
+                 "chair a": (0, 0, 0), "chair b": (0, 0, 0),
+                 "tray a": (0, 0, 0), "tray b": (0, 0, 0),
+                 "container": (0, 0, 0), "pen holder": (0, 0, 0),
+                 "trash bin a": (0, 0, 0), "trash bin b": (0, 0, 0),
+                 "storage box a": (0, 0, 0), "storage box b": (0, 0, 0)}
 
-    location2 = {"starting point":(0,0,0),"exit":(0,0,0),"host":(0,0,0),
-                 "dinning room":(0,0,0),"living room":(0,0,0),
-                 "hallway":(0,0,0), "dinning_room":(0,0,0),"living_room":(0,0,0)}
-                 
-    #chassis = RobotChassis()
-    #clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+    location2 = {"starting point": (0, 0, 0), "exit": (0, 0, 0), "host": (0, 0, 0),
+                 "dinning room": (0, 0, 0), "living room": (0, 0, 0),
+                 "hallway": (0, 0, 0), "dinning_room": (0, 0, 0), "living_room": (0, 0, 0)}
+
+    chassis = RobotChassis()
+    clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     net_pose = HumanPoseEstimation(device_name="GPU")
     _fw = FollowMe()
     print("gemini2 rgb")
@@ -259,54 +397,26 @@ if __name__ == "__main__":
     print("gemini2 depth")
     _depth2 = None
     _sub_down_cam_depth = rospy.Subscriber("/cam2/depth/image_raw", Image, callback_depth2)
-    #step_action
-    #add action for all code
-    #Step 0 first send
-    #Step 1 first get
-    #Step 9 send image response text
-    #step 10 get the image response
+    dnn_yolo = Yolov8("yolov8n", device_name="GPU")
+    # step_action
+    # add action for all code
+    # Step 0 first send
+    # Step 1 first get
+    # Step 9 send image response text
+    # step 10 get the image response
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
     for i in range(3):
-        step_action = -1
-        #s1 = input("The sentence is: ")
-        nigga=1
-        while True:
-            if nigga == 2: break
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                # Voice introduction
-                speak("You have 10 seconds to speak your command. Begin after the countdown.")
-                print("Recording for 10 seconds... (Speak after countdown)")
-
-                # Countdown
-                speak("3")
-                speak("2")
-                speak("1")
-                speak("Speak now")
-
-                # Record for exactly 10 seconds
-                audio_text = r.record(source, duration=20)
-
-                speak("Recording complete")
-                #print("Recording complete")
-
-                try:
-                    # Recognize speech using Google Web Speech API
-                    recognized_text = r.recognize_google(audio_text)
-                    print("You said: " + recognized_text)
-                    speak("You said: " + recognized_text)
-                    nigga=2
-                except sr.UnknownValueError:
-                    error_msg = "Sorry, I could not understand what you said. please speak it again"
-                    print(error_msg)
-                    speak(error_msg)
-                    nigga=1
+        user_input = get_user_input()
+        if user_input:
+            print(f"Final recognized input: {user_input},    {i}")
+        else:
+            speak("I couldn't understand your input after several attempts. Please try again later.")
         # post question
-        gg = post_message_request(0,recognized_text)  # step
+        gg = post_message_request(0, user_input)  # step
         print("post", gg)
         # get gemini answer
-        nigga=1
+        nigga = 1
         while True:
             r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
             response_data = r.text
@@ -333,25 +443,23 @@ if __name__ == "__main__":
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
             rospy.Rate(10).sleep()
-            
-            cv2.imshow("frame", code_image)
-            key = cv2.waitKey(1)
-            if key in [ord('q'), 27]:
-                break
+
+            #分類
+
             '''
             #Manipulation1
             if "manipulation1" in command_type or ("mani" in command_type and "1" in command_type):
                 pass
             #Manipulation2
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
-                pass
+                pass'''
             #Vision
-            if ("vision (enumeration)1" in command_type or ("vision" in command_type and "1" in command_type and "enume" in command_type)) or ("vision (enumeration)2" in command_type or ("vision" in command_type and "2" in command_type and "enume" in command_type)) or ("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type)) or ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
+            if ("vision (enumeration)1" in command_type or ("vision" in command_type and "1" in command_type and "enume" in command_type)) or ("vision (enumeration)2" in command_type or ("vision" in command_type and "2" in command_type and "enume" in command_type)):
                 #Move
                 if  step_action==0:
                     liyt=Q2.json
-                    if ("vision" in command_type and "2" in command_type and "enume" in command_type):
-                        num1, num2, num3 = location2[liyt["ROOM"]]
+                    if ("2" in command_type):
+                        num1, num2, num3 = location2[liyt["$ROOM"]]
                     else:
                         num1, num2, num3 = location1[liyt["$PLACE"]]
                     chassis.move_to(num1,num2,num3)
@@ -380,7 +488,85 @@ if __name__ == "__main__":
                     print("Upload Status Code:", response.status_code)
                     upload_result = response.json()
                     print("sent image")
-                    gg = post_message_request(9, s1)
+                    gg = post_message_request(9, user_input)
+                    print(gg)
+                    #get answer from gemini
+                    while True:
+                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
+                        response_data = r.text
+                        dictt = json.loads(response_data)
+                        if dictt["Steps"] == 10:
+                            break
+                        pass
+                        time.sleep(2)
+                    step_action = 2
+                    print(dictt["Voice"])
+                if  step_action==2:
+                    #back
+                    num1, num2, num3 = location2["starting point"]
+                    chassis.move_to(num1, num2, num3)
+                    while not rospy.is_shutdown():
+                        # 4. Get the chassis status.
+                        code = chassis.status_code
+                        text = chassis.status_text
+                        if code == 3:
+                            break
+                    time.sleep(1)
+                    clear_costmaps
+                    print(dictt["Voice"])
+            elif ("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type)) or ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
+                if  step_action==0:
+                    liyt=Q2.json
+                    num1, num2, num3 = location1[liyt["$PLACE"]]
+                    chassis.move_to(num1,num2,num3)
+                    while not rospy.is_shutdown():
+                        # 4. Get the chassis status.
+                        code = chassis.status_code
+                        text = chassis.status_text
+                        if code == 3:
+                            break
+                    time.sleep(1)
+                    clear_costmaps
+                    step_action = 1
+                if  step_action==1:
+                    time.sleep(2)
+                    print("take picture")
+                    #save frame
+                    output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                    cv2.imwrite(output_dir + "test.jpg", code_image)
+                    #ask gemini
+                    url = "http://192.168.50.147:8888/upload_image"
+                    #obj_comp
+                    # Food: Noodles, Cookies, Potato Chips
+                    # Kitchen Item: Detergent, Cup, Lunch Box
+                    # Task Item: Dice, Light Bulb, Block
+                    #pers_info
+                    #ask shirt color,age
+                    # color list
+                    '''
+                    Red
+                    Orange
+                    Yellow
+                    Green
+                    Blue
+                    Purple
+                    Pink
+                    Black
+                    White
+                    Gray
+                    Brown
+                    '''
+                    #name height need write
+
+                    file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/test.jpg"
+                    with open(file_path, 'rb') as f:
+                        files = {'image': (file_path.split('/')[-1], f)}
+                        response = requests.post(url, files=files)
+                        # remember to add the text question on the computer code
+                    print("Upload Status Code:", response.status_code)
+                    upload_result = response.json()
+                    print("sent image")
+                    gg = post_message_request(9, user_input)
                     print(gg)
                     #get answer from gemini
                     while True:
@@ -572,6 +758,6 @@ if __name__ == "__main__":
                 time.sleep(1)
                 clear_costmaps
             else:
-                say("I can't do it")'''
+                say("I can't do it")
 
-        
+
