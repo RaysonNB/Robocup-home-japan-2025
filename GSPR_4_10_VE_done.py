@@ -485,10 +485,10 @@ if __name__ == "__main__":
                     print("take picture")
                     #save frame
                     output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                    cv2.imwrite(output_dir + "test.jpg", code_image)
+                    cv2.imwrite(output_dir + "GSPR.jpg", code_image)
                     #ask gemini
                     url = "http://192.168.50.147:8888/upload_image"
-                    file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/test.jpg"
+                    file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
                         response = requests.post(url, files=files)
@@ -508,11 +508,13 @@ if __name__ == "__main__":
                         pass
                         time.sleep(2)
                     step_action = 2
-                    print(dictt["Voice"])
+                    speak(dictt["Voice"])
                 if  step_action==2:
                     #back
                     speak("walking to"+" the starting point")
+                    break
             else:
                 speak("next")
+                break
             
                     
