@@ -398,6 +398,7 @@ if __name__ == "__main__":
     _depth2 = None
     _sub_down_cam_depth = rospy.Subscriber("/cam2/depth/image_raw", Image, callback_depth2)
     dnn_yolo = Yolov8("yolov8n", device_name="GPU")
+    cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
     # step_action
     # add action for all code
     # Step 0 first send
