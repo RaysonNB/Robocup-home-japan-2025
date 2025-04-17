@@ -14,6 +14,7 @@ import time
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 from rospkg import RosPack
+from tensorflow.python.ops.numpy_ops import arcsin
 from tf.transformations import euler_from_quaternion
 from sensor_msgs.msg import Imu
 from typing import Tuple, List
@@ -22,7 +23,7 @@ import datetime
 from tf.transformations import euler_from_quaternion
 import os
 import requests
-
+import json
 class FollowMe(object):
     def __init__(self) -> None:
         self.pre_x, self.pre_z = 0.0, 0.0
@@ -308,6 +309,8 @@ if __name__ == "__main__":
     step="none"
     pre_s=0
     feature="rising right hand"
+    question_text="go to the dining room and find the guy who is rasing his hand"
+    pose="rasing his hand"
     while not rospy.is_shutdown():
         # voice check
         # break
@@ -369,16 +372,18 @@ if __name__ == "__main__":
                     cv2.rectangle(up_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
                     print("people distance", d)
-
+            if len(detection_list) != 0:
+                action="confim"
+                step="stop"
+        if action == "confim":
             for i in detection_list:
-                step = "stop"
                 x1, y1, x2, y2, cx, cy = i[0],i[1],i[2],i[3],i[4],i[5]
                 output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
                 face_box = [x1, y1, x2, y2]
                 box_roi = up_image[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                 fh, fw = abs(x1 - x2), abs(y1 - y2)
-                cv2.imwrite(output_dir + "Detect.jpg", box_roi)
-                file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/Detect.jpg"
+                cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                 with open(file_path, 'rb') as f:
                     files = {'image': (file_path.split('/')[-1], f)}
                     url = "http://192.168.50.147:8888/upload_image"
@@ -387,62 +392,85 @@ if __name__ == "__main__":
                 print("Upload Status Code:", response.status_code)
                 upload_result = response.json()
                 print("sent image")
-
-                gg = post_message_request("checkpeople", feature,"")
+                who_help="Is the guy "+pose
+                gg = post_message_request("checkpeople", feature,who_help)
                 print(gg)
                 # get answer from gemini
                 while True:
                     r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
                     response_data = r.text
                     dictt = json.loads(response_data)
-                    if dictt["Steps"] == "peoplefound":
+                    if dictt["Steps"] == 11:
                         break
                     pass
                     time.sleep(2)
-                if "yes" in dictt["answer"]:
+                if "yes" in dictt["answer"] or "ys" in dictt["answer"]:
                     speak("found you")
                     action="front"
-                    break
-            step = "turn"
+                    need_position=[x1, y1, x2, y2, cx, cy]
+                    er_x, er_y, d = get_real_xyz(up_depth, cx, cy, 2)
+                    angle = math.atan(er_x / d)
+                    if cx<320:
+                        speed = 0.251
+                    else:
+                        speed = -0.251
+                    times=round(angle/90.0*66)
+                    target_distance=d
+                    for i in range(times):
+                        move(0, speed)
+                        time.sleep(0.1)
+                else:
+                    action = "walkf"
+
+        if action == "walkf":
+            detections = dnn_yolo1.forward(up_image)[0]["det"]
+            # clothes_yolo
+            # nearest people
+            nx = 2000
+            cx_n, cy_n = 0, 0
+            CX_ER=99999
+            for i, detection in enumerate(detections):
+                # print(detection)
+                x1, y1, x2, y2, score, class_id = map(int, detection)
+                score = detection[4]
+                cx = (x2 - x1) // 2 + x1
+                cy = (y2 - y1) // 2 + y1
+                # depth=find_depsth
+                _, _, d = get_real_xyz(up_depth, cx, cy, 2)
+                cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320-cx)<CX_ER:
+                    need_position=[x1, y1, x2, y2, cx, cy]
+                    # ask gemini
+                    cv2.rectangle(up_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                    cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
+                    print("people distance", d)
+                    CX_ER=320-cx
+            h, w, c = down_image.shape
+            x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+            e = w // 2 - cx2
+            v = 0.001 * e
+            if v > 0:
+                v = min(v, 0.3)
+            if v < 0:
+                v = max(v, -0.3)
+            move(0, v)
+            print(e)
+            if abs(e) <= 5:
+                speak("walk")
+                action = "front"
+                step = "none"
+                move(0, 0)
         if action == "front":
-            pass
-        if action == "follow":
-            print('follow')
-            msg = Twist()
-            poses = net_pose.forward(up_image)
-            min_d = 9999
-            for i, pose in enumerate(poses):
-                if pose[5][2] == 0 or pose[6][2] == 0:
-                    continue
-                p5 = list(map(int, pose[5][:2]))
-                p6 = list(map(int, pose[6][:2]))
-                if d >= 1800 or d == 0: continue
-                cx = (p5[0] + p6[0]) // 2
-                cy = (p5[1] + p6[1]) // 2
-                cv2.circle(up_image, p5, 5, (0, 0, 255), -1)
-                cv2.circle(up_image, p6, 5, (0, 0, 255), -1)
-                cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
-                _, _, d = get_real_xyz(up_depth, cx, cy, 2)
-
-                if (d != 0 and d < min_d) and d <= 1800:
-                    t_idx = i
-                    min_d = d
-
-            x, z = 0, 0
-            if min_d != 9999:
-                p5 = list(map(int, poses[t_idx][5][:2]))
-                p6 = list(map(int, poses[t_idx][6][:2]))
-                cx = (p5[0] + p6[0]) // 2
-                cy = (p5[1] + p6[1]) // 2
-                _, _, d = get_real_xyz(up_depth, cx, cy, 2)
-                cv2.circle(up_image, (cx, cy), 5, (0, 255, 255), -1)
-
-                print("people_d", d)
-                if d >= 1800 or d == 0: continue
-
-                x, z, up_image, yn = _fw.calc_cmd_vel(up_image, up_depth, cx, cy)
-                print("turn_x_z:", x, z)
-            move(x, z)
+            speed = 0.2
+            d = up_image[160][320]
+            if d!=0 and d<=2000:
+                action="speak"
+                move(0,0)
+            else:
+                move(0.2,0)
+        if action=="speak":
+            speak("hi nigga how can I help you")
         h, w, c = up_image.shape
         upout = cv2.line(up_image, (320, 0), (320, 500), (0, 255, 0), 5)
         downout = cv2.line(down_image, (320, 0), (320, 500), (0, 255, 0), 5)
