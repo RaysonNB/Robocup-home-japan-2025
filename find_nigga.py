@@ -24,6 +24,8 @@ from tf.transformations import euler_from_quaternion
 import os
 import requests
 import json
+
+
 class FollowMe(object):
     def __init__(self) -> None:
         self.pre_x, self.pre_z = 0.0, 0.0
@@ -246,25 +248,32 @@ def callback_image2(msg):
 def callback_depth2(msg):
     global _depth2
     _depth2 = CvBridge().imgmsg_to_cv2(msg, "passthrough")
+
+
 def callback_imu(msg):
     global _imu
     _imu = msg
+
+
 def speak(g):
     os.system(f'espeak "{g}"')
     # rospy.loginfo(g)
     print(g)
-def post_message_request(step, s1,question):
+
+
+def post_message_request(step, s1, question):
     api_url = "http://192.168.50.147:8888/Fambot"
     my_todo = {"Question1": "None",
                "Question2": "None",
                "Question3": "None",
                "Steps": step,
                "Voice": s1,
-               "Questionasking":question,
-               "answer":"None"}
+               "Questionasking": question,
+               "answer": "None"}
     response = requests.post(api_url, json=my_todo, timeout=2.5)
     result = response.json()
     return result
+
 
 if __name__ == "__main__":
     rospy.init_node("demo")
@@ -284,7 +293,7 @@ if __name__ == "__main__":
     print("yolov8")
     Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
-    #dnn_yolo1.classes = ['obj']
+    # dnn_yolo1.classes = ['obj']
     # two yolo
     print("pose")
     net_pose = HumanPoseEstimation(device_name="GPU")
@@ -297,15 +306,15 @@ if __name__ == "__main__":
     _fw = FollowMe()
     action = "walk"
     mode = 0
-    find_people="none"
-    step="none"
-    pre_s=0
+    find_people = "none"
+    step = "none"
+    pre_s = 0
     clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     speak("start the code")
-    feature="rising right hand"
-    question_text="go to the dining room and find the guy who is rasing his hand"
-    pose="rasing his hand"
-    detection_list=[]
+    feature = "rising right hand"
+    question_text = "go to the dining room and find the guy who is rasing his hand"
+    pose = "rasing his hand"
+    detection_list = []
     while not rospy.is_shutdown():
         # voice check
         # break
@@ -323,10 +332,10 @@ if __name__ == "__main__":
         cx1, cx2, cy1, cy2 = 0, 0, 0, 0
         up_image = _frame2.copy()
         up_depth = _depth2.copy()
-        #到咗
+        # 到咗
         if action == "walk":
-            #navigation
-            #position=(-7.204, -6.026, -0.007)
+            # navigation
+            # position=(-7.204, -6.026, -0.007)
             clear_costmaps
             chassis.move_to(-7.204, -6.026, -0.007)
             # checking
@@ -346,7 +355,7 @@ if __name__ == "__main__":
                 ]
                 roll1, pitch1, yaw1 = euler_from_quaternion(q)
                 mode = 1
-            action="find"
+            action = "find"
             step = "turn"
         if step == "turn":
             move(0, -0.2)
@@ -361,8 +370,8 @@ if __name__ == "__main__":
             print("Upload Status Code:", response.status_code)
             upload_result = response.json()
             print("sent image")
-            who_help="Is the guy "+pose
-            gg = post_message_request("checkpeople", feature,who_help)
+            who_help = "Is the guy " + pose
+            gg = post_message_request("checkpeople", feature, who_help)
             print(gg)
             # get answer from gemini
             while True:
@@ -373,16 +382,16 @@ if __name__ == "__main__":
                     break
                 pass
                 time.sleep(2)
-            aaa=dictt["Voice"].lower()
+            aaa = dictt["Voice"].lower()
             print("answer:", aaa)
             if "yes" in aaa or "ys" in aaa:
                 speak("found you the guying rising hand")
                 action = "front"
-                step="none"
+                step = "none"
             else:
-                action="turn"
-                step="none"
-            gg = post_message_request(-1, feature,who_help)
+                action = "find"
+                step = "turn"
+            gg = post_message_request(-1, feature, who_help)
 
         if action == "find":
             detections = dnn_yolo1.forward(up_image)[0]["det"]
@@ -390,8 +399,8 @@ if __name__ == "__main__":
             # nearest people
             nx = 2000
             cx_n, cy_n = 0, 0
-            CX_ER=99999
-            need_position=0
+            CX_ER = 99999
+            need_position = 0
             for i, detection in enumerate(detections):
                 # print(detection)
                 x1, y1, x2, y2, score, class_id = map(int, detection)
@@ -400,16 +409,16 @@ if __name__ == "__main__":
                 cy = (y2 - y1) // 2 + y1
                 # depth=find_depsth
                 _, _, d = get_real_xyz(up_depth, cx, cy, 2)
-                #cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                
-                if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320-cx)<CX_ER:
-                    need_position=[x1, y1, x2, y2, cx, cy]
+                # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320 - cx) < CX_ER:
+                    need_position = [x1, y1, x2, y2, cx, cy]
                     # ask gemini
                     cv2.rectangle(up_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
                     print("people distance", d)
-                    CX_ER=320-cx
-            if need_position!=0:
+                    CX_ER = 320 - cx
+            if need_position != 0:
                 h, w, c = up_image.shape
                 x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
                 e = w // 2 - cx2
@@ -426,27 +435,27 @@ if __name__ == "__main__":
                 fh, fw = abs(x1 - x2), abs(y1 - y2)
                 cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
                 if abs(e) <= 5:
-                    #speak("walk")
+                    # speak("walk")
                     action = "none"
                     step = "confirm"
                     print("turned")
                     move(0, 0)
-                
+
         if action == "front":
             speed = 0.2
-            h,w,c=up_image.shape
+            h, w, c = up_image.shape
             cx, cy = w // 2, h // 2
             for i in range(cy + 1, h):
                 if _depth2[cy][cx] == 0 or 0 < _depth2[i][cx] < _depth2[cy][cx]:
                     cy = i
             _, _, d = get_real_xyz(_depth2, cx, cy, 2)
-            print("depth",d)
-            if d!=0 and d<=500:
-                action="speak"
-                move(0,0)
+            print("depth", d)
+            if d != 0 and d <= 500:
+                action = "speak"
+                move(0, 0)
             else:
-                move(0.2,0)
-        if action=="speak":
+                move(0.2, 0)
+        if action == "speak":
             speak("hi nigga how can I help you")
             break
         cv2.imshow("frame", up_image)
