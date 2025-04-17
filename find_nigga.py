@@ -14,7 +14,7 @@ import time
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 from rospkg import RosPack
-from tensorflow.python.ops.numpy_ops import arcsin
+from std_srvs.srv import Empty
 from tf.transformations import euler_from_quaternion
 from sensor_msgs.msg import Imu
 from typing import Tuple, List
@@ -270,19 +270,11 @@ if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
     print("gemini2 rgb")
-    _image1 = None
-    _topic_image1 = "/cam2/color/image_raw"
-    _sub_up_cam_image = rospy.Subscriber(_topic_image1, Image, callback_image1)
-    print("gemini2 depth")
-    _depth1 = None
-    _topic_depth1 = "/cam2/depth/image_raw"
-    _sub_up_cam_depth = rospy.Subscriber(_topic_depth1, Image, callback_depth1)
-    print("gemini2 rgb")
     _frame2 = None
-    _sub_down_cam_image = rospy.Subscriber("/cam1/color/image_raw", Image, callback_image2)
+    _sub_down_cam_image = rospy.Subscriber("/camera/color/image_raw", Image, callback_image2)
     print("gemini2 depth")
     _depth2 = None
-    _sub_down_cam_depth = rospy.Subscriber("/cam1/depth/image_raw", Image, callback_depth2)
+    _sub_down_cam_depth = rospy.Subscriber("/camera/depth/image_raw", Image, callback_depth2)
     s = ""
     print("cmd_vel")
     _cmd_vel = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -292,7 +284,7 @@ if __name__ == "__main__":
     print("yolov8")
     Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
-    dnn_yolo1.classes = ['obj']
+    #dnn_yolo1.classes = ['obj']
     # two yolo
     print("pose")
     net_pose = HumanPoseEstimation(device_name="GPU")
@@ -303,14 +295,17 @@ if __name__ == "__main__":
     rospy.Subscriber(topic_imu, Imu, callback_imu)
     rospy.wait_for_message(topic_imu, Imu)
     _fw = FollowMe()
-    action = "find"
+    action = "walk"
     mode = 0
     find_people="none"
     step="none"
     pre_s=0
+    clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+    speak("start the code")
     feature="rising right hand"
     question_text="go to the dining room and find the guy who is rasing his hand"
     pose="rasing his hand"
+    detection_list=[]
     while not rospy.is_shutdown():
         # voice check
         # break
@@ -321,21 +316,26 @@ if __name__ == "__main__":
 
         if _frame2 is None: print("down rgb none")
         if _depth2 is None: print("down depth none")
-        if _depth1 is None: print("up depth none")
-        if _image1 is None: print("up rgb none")
 
-        if _depth1 is None or _image1 is None or _depth2 is None or _frame2 is None: continue
+        if _depth2 is None or _frame2 is None: continue
 
         # var needs in while
         cx1, cx2, cy1, cy2 = 0, 0, 0, 0
-        down_image = _frame2.copy()
-        down_depth = _depth2.copy()
-        up_image = _image1.copy()
-        up_depth = _depth1.copy()
+        up_image = _frame2.copy()
+        up_depth = _depth2.copy()
         #到咗
-        detection_list=[]
         if action == "walk":
             #navigation
+            #position=(-7.204, -6.026, -0.007)
+            clear_costmaps
+            chassis.move_to(-7.204, -6.026, -0.007)
+            # checking
+            while not rospy.is_shutdown():
+                # 4. Get the chassis status.
+                code = chassis.status_code
+                text = chassis.status_text
+                if code == 3:
+                    break
             if mode == 0 and mode != 1:
                 time.sleep(1)
                 q = [
@@ -350,85 +350,48 @@ if __name__ == "__main__":
             step = "turn"
         if step == "turn":
             move(0, -0.2)
-        if action == "find":
-            #when arrive to the position
-            detections = dnn_yolo1.forward(up_image)[0]["det"]
-            # clothes_yolo
-            # nearest people
-            nx = 2000
-            cx_n, cy_n = 0, 0
-            for i, detection in enumerate(detections):
-                # print(detection)
-                x1, y1, x2, y2, score, class_id = map(int, detection)
-                score = detection[4]
-                cx = (x2 - x1) // 2 + x1
-                cy = (y2 - y1) // 2 + y1
-                # depth=find_depsth
-                _, _, d = get_real_xyz(up_depth, cx, cy, 2)
-                cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                if score > 0.65 and class_id == 0 and d <= nx and d!=0:
-                    detection_list.append([x1, y1, x2, y2, cx, cy])
-                    # ask gemini
-                    cv2.rectangle(up_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                    cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
-                    print("people distance", d)
-            if len(detection_list) != 0:
-                action="confim"
-                step="stop"
-        if action == "confim":
-            for i in detection_list:
-                x1, y1, x2, y2, cx, cy = i[0],i[1],i[2],i[3],i[4],i[5]
-                output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                face_box = [x1, y1, x2, y2]
-                box_roi = up_image[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
-                fh, fw = abs(x1 - x2), abs(y1 - y2)
-                cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
-                file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
-                with open(file_path, 'rb') as f:
-                    files = {'image': (file_path.split('/')[-1], f)}
-                    url = "http://192.168.50.147:8888/upload_image"
-                    response = requests.post(url, files=files)
-                    # remember to add the text question on the computer code
-                print("Upload Status Code:", response.status_code)
-                upload_result = response.json()
-                print("sent image")
-                who_help="Is the guy "+pose
-                gg = post_message_request("checkpeople", feature,who_help)
-                print(gg)
-                # get answer from gemini
-                while True:
-                    r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
-                    response_data = r.text
-                    dictt = json.loads(response_data)
-                    if dictt["Steps"] == 11:
-                        break
-                    pass
-                    time.sleep(2)
-                if "yes" in dictt["answer"] or "ys" in dictt["answer"]:
-                    speak("found you")
-                    action="front"
-                    need_position=[x1, y1, x2, y2, cx, cy]
-                    er_x, er_y, d = get_real_xyz(up_depth, cx, cy, 2)
-                    angle = math.atan(er_x / d)
-                    if cx<320:
-                        speed = 0.251
-                    else:
-                        speed = -0.251
-                    times=round(angle/90.0*66)
-                    target_distance=d
-                    for i in range(times):
-                        move(0, speed)
-                        time.sleep(0.1)
-                else:
-                    action = "walkf"
+        if step == "confirm":
+            print("imwrited")
+            file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
+            with open(file_path, 'rb') as f:
+                files = {'image': (file_path.split('/')[-1], f)}
+                url = "http://192.168.50.147:8888/upload_image"
+                response = requests.post(url, files=files)
+                # remember to add the text question on the computer code
+            print("Upload Status Code:", response.status_code)
+            upload_result = response.json()
+            print("sent image")
+            who_help="Is the guy "+pose
+            gg = post_message_request("checkpeople", feature,who_help)
+            print(gg)
+            # get answer from gemini
+            while True:
+                r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                response_data = r.text
+                dictt = json.loads(response_data)
+                if dictt["Steps"] == 11:
+                    break
+                pass
+                time.sleep(2)
+            aaa=dictt["Voice"].lower()
+            print("answer:", aaa)
+            if "yes" in aaa or "ys" in aaa:
+                speak("found you the guying rising hand")
+                action = "front"
+                step="none"
+            else:
+                action="turn"
+                step="none"
+            gg = post_message_request(-1, feature,who_help)
 
-        if action == "walkf":
+        if action == "find":
             detections = dnn_yolo1.forward(up_image)[0]["det"]
             # clothes_yolo
             # nearest people
             nx = 2000
             cx_n, cy_n = 0, 0
             CX_ER=99999
+            need_position=0
             for i, detection in enumerate(detections):
                 # print(detection)
                 x1, y1, x2, y2, score, class_id = map(int, detection)
@@ -437,8 +400,8 @@ if __name__ == "__main__":
                 cy = (y2 - y1) // 2 + y1
                 # depth=find_depsth
                 _, _, d = get_real_xyz(up_depth, cx, cy, 2)
-                cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
+                #cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                
                 if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320-cx)<CX_ER:
                     need_position=[x1, y1, x2, y2, cx, cy]
                     # ask gemini
@@ -446,39 +409,47 @@ if __name__ == "__main__":
                     cv2.circle(up_image, (cx, cy), 5, (0, 255, 0), -1)
                     print("people distance", d)
                     CX_ER=320-cx
-            h, w, c = down_image.shape
-            x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
-            e = w // 2 - cx2
-            v = 0.001 * e
-            if v > 0:
-                v = min(v, 0.3)
-            if v < 0:
-                v = max(v, -0.3)
-            move(0, v)
-            print(e)
-            if abs(e) <= 5:
-                speak("walk")
-                action = "front"
-                step = "none"
-                move(0, 0)
+            if need_position!=0:
+                h, w, c = up_image.shape
+                x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+                e = w // 2 - cx2
+                v = 0.001 * e
+                if v > 0:
+                    v = min(v, 0.3)
+                if v < 0:
+                    v = max(v, -0.3)
+                move(0, v)
+                print(e)
+                output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                face_box = [x1, y1, x2, y2]
+                box_roi = up_image[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                fh, fw = abs(x1 - x2), abs(y1 - y2)
+                cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                if abs(e) <= 5:
+                    #speak("walk")
+                    action = "none"
+                    step = "confirm"
+                    print("turned")
+                    move(0, 0)
+                
         if action == "front":
             speed = 0.2
-            d = up_image[160][320]
-            if d!=0 and d<=2000:
+            h,w,c=up_image.shape
+            cx, cy = w // 2, h // 2
+            for i in range(cy + 1, h):
+                if _depth2[cy][cx] == 0 or 0 < _depth2[i][cx] < _depth2[cy][cx]:
+                    cy = i
+            _, _, d = get_real_xyz(_depth2, cx, cy, 2)
+            print("depth",d)
+            if d!=0 and d<=500:
                 action="speak"
                 move(0,0)
             else:
                 move(0.2,0)
         if action=="speak":
             speak("hi nigga how can I help you")
-        h, w, c = up_image.shape
-        upout = cv2.line(up_image, (320, 0), (320, 500), (0, 255, 0), 5)
-        downout = cv2.line(down_image, (320, 0), (320, 500), (0, 255, 0), 5)
-        img = np.zeros((h, w * 2, c), dtype=np.uint8)
-        img[:h, :w, :c] = upout
-        img[:h, w:, :c] = downout
-
-        cv2.imshow("frame", img)
+            break
+        cv2.imshow("frame", up_image)
         key = cv2.waitKey(1)
         if key in [ord('q'), 27]:
             break
