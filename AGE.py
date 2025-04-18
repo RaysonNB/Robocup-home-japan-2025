@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import argparse
 
+#https://drive.google.com/drive/folders/16qqswNHvUCGQI4iCekXdd6T_-ePKZrzz
 # Add argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='Path to image file')
