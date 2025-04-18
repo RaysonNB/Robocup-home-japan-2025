@@ -393,22 +393,186 @@ def confirm_recording(original_text):
         else:
             speak("I didn't understand your answer.")
 
+
+locations = {
+    # Furniture and objects
+    "wall long": [0, 0, 0],
+    "wall short": [0, 0, 0],
+    "long table a": [0, 0, 0],
+    "long table b": [0, 0, 0],
+    "tall table": [0, 0, 0],
+    "shelf": [0, 0, 0],
+    "chair a": [0, 0, 0],
+    "chair b": [0, 0, 0],
+    "tray a": [0, 0, 0],
+    "tray b": [0, 0, 0],
+    "container": [0, 0, 0],
+    "pen holder": [0, 0, 0],
+    "trash bin a": [0, 0, 0],
+    "trash bin b": [0, 0, 0],
+    "storage box a": [0, 0, 0],
+    "storage box b": [0, 0, 0],
+
+    # Locations and special points
+    "starting point": [0, 0, 0],
+    "exit": [0, 0, 0],
+    "host": [0, 0, 0],
+    "dining room": [0, 0, 0],
+    "living room": [0, 0, 0],
+    "hallway": [0, 0, 0]
+}
+def check_item(name):
+    corrected="starting point"
+    cnt=0
+    if name in locations:
+        corrected=name
+    else:
+        corrected=corrected.replace("_"," ")
+    return corrected
+
+
+
+chassis = RobotChassis()
+clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+def walk_to(name):
+    name=name.lower()
+    real_name = check_item(name)
+    num1, num2, num3 = locations[real_name]
+    chassis.move_to(num1, num2, num3)
+    while not rospy.is_shutdown():
+        # 4. Get the chassis status.
+        code = chassis.status_code
+        text = chassis.status_text
+        if code == 3:
+            break
+    time.sleep(1)
+    clear_costmaps
+class FollowMe(object):
+    def __init__(self) -> None:
+        self.pre_x, self.pre_z = 0.0, 0.0
+
+    def get_pose_target(self, pose, num):
+        p = []
+        for i in [num]:
+            if pose[i][2] > 0:
+                p.append(pose[i])
+
+        if len(p) == 0:
+            return -1, -1, -1
+        return int(p[0][0]), int(p[0][1]), 1
+
+    def get_real_xyz(self, depth, x: int, y: int) -> Tuple[float, float, float]:
+        if x < 0 or y < 0:
+            return 0, 0, 0
+        a1 = 55.0
+        b1 = 86.0
+        a = a1 * np.pi / 180
+        b = b1 * np.pi / 180
+
+        d = depth[y][x]
+        h, w = depth.shape[:2]
+        if d == 0:
+            for k in range(1, 15, 1):
+                if d == 0 and y - k >= 0:
+                    for j in range(x - k, x + k, 1):
+                        if not (0 <= j < w):
+                            continue
+                        d = depth[y - k][j]
+                        if d > 0:
+                            break
+                if d == 0 and x + k < w:
+                    for i in range(y - k, y + k, 1):
+                        if not (0 <= i < h):
+                            continue
+                        d = depth[i][x + k]
+                        if d > 0:
+                            break
+                if d == 0 and y + k < h:
+                    for j in range(x + k, x - k, -1):
+                        if not (0 <= j < w):
+                            continue
+                        d = depth[y + k][j]
+                        if d > 0:
+                            break
+                if d == 0 and x - k >= 0:
+                    for i in range(y + k, y - k, -1):
+                        if not (0 <= i < h):
+                            continue
+                        d = depth[i][x - k]
+                        if d > 0:
+                            break
+                if d > 0:
+                    break
+        x = x - w // 2
+        y = y - h // 2
+        real_y = y * 2 * d * np.tan(a / 2) / h
+        real_x = x * 2 * d * np.tan(b / 2) / w
+        return real_x, real_y, d
+
+    def calc_linear_x(self, cd: float, td: float) -> float:
+        if cd <= 0:
+            return 0
+        e = cd - td
+        p = 0.0005
+        x = p * e
+        if x > 0:
+            x = min(x, 0.15)
+        if x < 0:
+            x = max(x, -0.15)
+        return x
+
+    def calc_angular_z(self, cx: float, tx: float) -> float:
+        if cx < 0:
+            return 0
+        e = tx - cx
+        p = 0.0025
+        z = p * e
+        if z > 0:
+            z = min(z, 0.2)
+        if z < 0:
+            z = max(z, -0.2)
+        return z
+
+    def calc_cmd_vel(self, image, depth, cx, cy) -> Tuple[float, float]:
+        image = image.copy()
+        depth = depth.copy()
+
+        frame = image
+        if cx == 2000:
+            cur_x, cur_z = 0, 0
+            return cur_x, cur_z, frame, "no"
+
+        print(cx, cy)
+        _, _, d = self.get_real_xyz(depth, cx, cy)
+
+        cur_x = self.calc_linear_x(d, 800)
+        cur_z = self.calc_angular_z(cx, 320)
+
+        dx = cur_x - self.pre_x
+        if dx > 0:
+            dx = min(dx, 0.15)
+        if dx < 0:
+            dx = max(dx, -0.15)
+
+        dz = cur_z - self.pre_z
+        if dz > 0:
+            dz = min(dz, 0.4)
+        if dz < 0:
+            dz = max(dz, -0.4)
+
+        cur_x = self.pre_x + dx
+        cur_z = self.pre_z + dz
+
+        self.pre_x = cur_x
+        self.pre_z = cur_z
+
+        return cur_x, cur_z, frame, "yes"
+
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
     # open things
-    location1 = {"wall long": (0, 0, 0), "wall short": (0, 0, 0),
-                 "long table a": (0, 0, 0), "long table b": (0, 0, 0),
-                 "tall table": (0, 0, 0), "shelf": (0, 0, 0),
-                 "chair a": (0, 0, 0), "chair b": (0, 0, 0),
-                 "tray a": (0, 0, 0), "tray b": (0, 0, 0),
-                 "container": (0, 0, 0), "containers": (0, 0, 0), "pen holder": (0, 0, 0),
-                 "trash bin a": (0, 0, 0), "trash bin b": (0, 0, 0),
-                 "storage box a": (0, 0, 0), "storage box b": (0, 0, 0)}
 
-    location2 = {"starting point": (0, 0, 0), "exit": (0, 0, 0), "host": (0, 0, 0),
-                 "dining room": (0, 0, 0), "living room": (0, 0, 0),
-                 "hallway": (0, 0, 0), "dining_room": (0, 0, 0), "living_room": (0, 0, 0)}
 
     # chassis = RobotChassis()
     # clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
@@ -422,8 +586,9 @@ if __name__ == "__main__":
     _sub_down_cam_depth = rospy.Subscriber("/cam2/depth/image_raw", Image, callback_depth2)
     dnn_yolo = Yolov8("yolov8n", device_name="GPU")
     cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
-    chassis = RobotChassis()
-    clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+    follow_cnt=0
+    action=0
+    _fw=FollowMe()
     # step_action
     # add action for all code
     # Step 0 first send
@@ -435,6 +600,7 @@ if __name__ == "__main__":
     while True:
         if "start" in s:
             break
+    step="none"
     for i in range(3):
         qr_code_detector = cv2.QRCodeDetector()
         data=0
@@ -482,9 +648,17 @@ if __name__ == "__main__":
         command_type = command_type.lower()
         step_action = 0
         # continue
+        liyt = Q2
+        print("yolov8")
+        Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
+        dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
+        pre_s=""
         while not rospy.is_shutdown():
             # voice check
             # break
+            if s != "" and s != pre_s:
+                print(s)
+                pre_s = s
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
             rospy.Rate(10).sleep()
@@ -493,15 +667,58 @@ if __name__ == "__main__":
             if key in [ord('q'), 27]:
                 break
             # DIVIDE
-            '''
-            #Manipulation1
+            #Manipulation1 just walk
             if "manipulation1" in command_type or ("mani" in command_type and "1" in command_type):
                 if step_action==0:
-                    liyt = Q2
-                    speak("going to" + liyt["$ROOM1"])
-            #Manipulation2
+                    name_position="$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position="ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action=1
+                if step_action==1:
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action=2
+                if step_action==2:
+                    name_position = "$PLACE2"
+                    if "$PLACE2" in liyt:
+                        name_position = "PLACE2"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action=3
+                if step_action==3:
+                    speak("going to" + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    step_action=4
+                    break
+            #Manipulation2 just walk
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
-                pass
+                if step_action == 0:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position = "ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 1
+                if step_action == 1:
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 2
+                if step_action == 2:
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 4
+                    break
             #Vision'''
             if ("vision (enumeration)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "enume" in command_type)) or (
@@ -511,21 +728,17 @@ if __name__ == "__main__":
                 if step_action == 0:
                     liyt = Q2
                     if ("2" in command_type):
-                        # num1, num2, num3 = location2[liyt["$ROOM"]]
-                        speak("going to" + liyt["$ROOM1"])
+                        name_position = "$ROOM1"
+                        if "$ROOM1" in liyt:
+                            name_position = "ROOM1"
+                        speak("going to" + liyt[name_position])
+                        walk_to(liyt[name_position])
                     else:
-                        # num1, num2, num3 = location1[liyt["$PLACE"]]
-                        speak("going to" + liyt["$PLACE1"])
-                    '''
-                    chassis.move_to(num1,num2,num3)
-                    while not rospy.is_shutdown():
-                        # 4. Get the chassis status.
-                        code = chassis.status_code
-                        text = chassis.status_text
-                        if code == 3:
-                            break
-                    time.sleep(1)
-                    clear_costmaps'''
+                        name_position = "$PLACE1"
+                        if "$PLACE1" in liyt:
+                            name_position = "PLACE1"
+                        speak("going to" + liyt[name_position])
+                        walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
@@ -558,188 +771,587 @@ if __name__ == "__main__":
                     speak(dictt["Voice"])
                 if step_action == 2:
                     # back
-                    speak("walking to" + " the starting point")
-                    '''
-                    chassis.move_to(num1,num2,num3)
-                    while not rospy.is_shutdown():
-                        # 4. Get the chassis status.
-                        code = chassis.status_code
-                        text = chassis.status_text
-                        if code == 3:
-                            break
-                    time.sleep(1)
-                    clear_costmaps
-                    '''
+                    speak("going to" + liyt["starting point"])
+                    walk_to(liyt["starting point"])
                     break
-            elif ("vision (descridption)1" in command_type or (
-                        "vision" in command_type and "1" in command_type and "descri" in command_type)) or (
-                        "vision (descridption)2" in command_type or (
-                            "vision" in command_type and "2" in command_type and "descri" in command_type)):
+            elif (("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type))):
                 pass
-            elif "Navigation1" in command_type or ("Mani" in command_type and "1" in command_type):
+            elif ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
+                pass
+            elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
                 liyt = Q2.json
-                num1, num2, num3 = location1[liyt["ROOM1"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                # walk in front of the guy
-                find_walk_in_front(code_image, code_depth)
+                if step_action == 0:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position = "ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action=1
+                    step="turn"
+                    action = "find"
+                if step_action==1:
+                    # walk in front of the guy
+                    name_position = "$POSE/GESTURE"
+                    if "$POSE/GESTURE" in liyt:
+                        name_position = "POSE/GESTURE"
+                    speak("going to" + liyt[name_position])
+                    feature=liyt[name_position]
+                    if step == "turn":
+                        move(0, -0.2)
+                    if step == "confirm":
+                        print("imwrited")
+                        file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
+                        with open(file_path, 'rb') as f:
+                            files = {'image': (file_path.split('/')[-1], f)}
+                            url = "http://192.168.50.147:8888/upload_image"
+                            response = requests.post(url, files=files)
+                            # remember to add the text question on the computer code
+                        print("Upload Status Code:", response.status_code)
+                        upload_result = response.json()
+                        print("sent image")
+                        who_help = "Is the guy " + pose
+                        gg = post_message_request("checkpeople", feature, who_help)
+                        print(gg)
+                        # get answer from gemini
+                        while True:
+                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            response_data = r.text
+                            dictt = json.loads(response_data)
+                            if dictt["Steps"] == 11:
+                                break
+                            pass
+                            time.sleep(2)
+                        aaa = dictt["Voice"].lower()
+                        print("answer:", aaa)
+                        if "yes" in aaa or "ys" in aaa:
+                            speak("found you the guying rising hand")
+                            action = "front"
+                            step = "none"
+                        else:
+                            action = "find"
+                            step = "turn"
+                        gg = post_message_request(-1, feature, who_help)
+
+                    if action == "find":
+                        detections = dnn_yolo1.forward(code_image)[0]["det"]
+                        # clothes_yolo
+                        # nearest people
+                        nx = 2000
+                        cx_n, cy_n = 0, 0
+                        CX_ER = 99999
+                        need_position = 0
+                        for i, detection in enumerate(detections):
+                            # print(detection)
+                            x1, y1, x2, y2, score, class_id = map(int, detection)
+                            score = detection[4]
+                            cx = (x2 - x1) // 2 + x1
+                            cy = (y2 - y1) // 2 + y1
+                            # depth=find_depsth
+                            _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                            # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                            if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320 - cx) < CX_ER:
+                                need_position = [x1, y1, x2, y2, cx, cy]
+                                # ask gemini
+                                cv2.rectangle(code_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                                cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                                print("people distance", d)
+                                CX_ER = 320 - cx
+                        if need_position != 0:
+                            h, w, c = code_image.shape
+                            x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+                            e = w // 2 - cx2
+                            v = 0.001 * e
+                            if v > 0:
+                                v = min(v, 0.3)
+                            if v < 0:
+                                v = max(v, -0.3)
+                            move(0, v)
+                            print(e)
+                            output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                            face_box = [x1, y1, x2, y2]
+                            box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                            fh, fw = abs(x1 - x2), abs(y1 - y2)
+                            cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                            if abs(e) <= 5:
+                                # speak("walk")
+                                action = "none"
+                                step = "confirm"
+                                print("turned")
+                                move(0, 0)
+
+                    if action == "front":
+                        speed = 0.2
+                        h, w, c = code_image.shape
+                        cx, cy = w // 2, h // 2
+                        for i in range(cy + 1, h):
+                            if _depth2[cy][cx] == 0 or 0 < _depth2[i][cx] < _depth2[cy][cx]:
+                                cy = i
+                        _, _, d = get_real_xyz(_depth2, cx, cy, 2)
+                        print("depth", d)
+                        if d != 0 and d <= 700:
+                            action = "speak"
+                            move(0, 0)
+                        else:
+                            move(0.2, 0)
+                    if action == "speak":
+                        speak("hi nigga can u stand behind me and I will follow u now")
+                        speak("please say robot stop when you arrived and I will go back")
+                        time.sleep(4)
+                        speak("dear guest please walk")
+                        action=1
+                        step="none"
+                        step_action=2
                 # follow me
-                print('follow you')
-                msg = Twist()
+                if action == 1:
+                    s = s.lower()
+                    print("listening", s)
+                    if "thank" in s or "you" in s or "stop" in s:
+                        action = 0
+                        step_action=3
+                if step_action == 2:
 
-                poses = net_pose.forward(code_image)
-                min_d = 9999
-                t_idx = -1
-                for i, pose in enumerate(poses):
-                    if pose[5][2] == 0 or pose[6][2] == 0:
-                        continue
-                    p5 = list(map(int, pose[5][:2]))
-                    p6 = list(map(int, pose[6][:2]))
+                    msg = Twist()
 
-                    cx = (p5[0] + p6[0]) // 2
-                    cy = (p5[1] + p6[1]) // 2
-                    cv2.circle(code_image, p5, 5, (0, 0, 255), -1)
-                    cv2.circle(code_image, p6, 5, (0, 0, 255), -1)
-                    cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
-                    _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    if d >= 1800 or d == 0: continue
-                    if (d != 0 and d < min_d):
-                        t_idx = i
-                        min_d = d
+                    poses = net_pose.forward(code_image)
+                    min_d = 9999
+                    t_idx = -1
+                    for i, pose in enumerate(poses):
+                        if pose[5][2] == 0 or pose[6][2] == 0:
+                            continue
+                        p5 = list(map(int, pose[5][:2]))
+                        p6 = list(map(int, pose[6][:2]))
 
-                x, z = 0, 0
-                if t_idx != -1:
-                    p5 = list(map(int, poses[t_idx][5][:2]))
-                    p6 = list(map(int, poses[t_idx][6][:2]))
-                    cx = (p5[0] + p6[0]) // 2
-                    cy = (p5[1] + p6[1]) // 2
-                    _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    cv2.circle(code_image, (cx, cy), 5, (0, 255, 255), -1)
+                        cx = (p5[0] + p6[0]) // 2
+                        cy = (p5[1] + p6[1]) // 2
+                        cv2.circle(code_image, p5, 5, (0, 0, 255), -1)
+                        cv2.circle(code_image, p6, 5, (0, 0, 255), -1)
+                        cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                        _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                        if d >= 1800 or d == 0: continue
+                        if (d != 0 and d < min_d):
+                            t_idx = i
+                            min_d = d
 
-                    print("people_d", d)
-                    if d >= 1800 or d == 0: continue
+                    x, z = 0, 0
+                    if t_idx != -1:
+                        p5 = list(map(int, poses[t_idx][5][:2]))
+                        p6 = list(map(int, poses[t_idx][6][:2]))
+                        cx = (p5[0] + p6[0]) // 2
+                        cy = (p5[1] + p6[1]) // 2
+                        _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                        cv2.circle(code_image, (cx, cy), 5, (0, 255, 255), -1)
 
-                    x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
-                    print("turn_x_z:", x, z)
-                move(x, z)
-                # back
-                num1, num2, num3 = location2["starting point"]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                time.sleep(1)
-                clear_costmaps
+                        print("people_d", d)
+                        if d >= 1800 or d == 0: continue
+
+                        x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
+                        print("turn_x_z:", x, z)
+                    move(x, z)
+                if step_action == 3:
+                    speak("going to" + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
             # Navigation2
-            elif "Navigation2" in command_type or ("Mani" in command_type and "1" in command_type):
-                # go to the first place and find the guy
+            elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
                 liyt = Q2.json
-                num1, num2, num3 = location1[liyt["ROOM1"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                clear_costmaps
-                # walk in front of the guy
-                find_walk_in_front(code_image, code_depth)
-                # guide him/her to another room
-                num1, num2, num3 = location1[liyt["ROOM2"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                clear_costmaps
-                # back
-                num1, num2, num3 = location2["starting point"]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                time.sleep(1)
-                clear_costmaps
-                # two rooms
-            # Speech1
-            elif "Speech1" in command_type or ("Mani" in command_type and "1" in command_type):
+                if step_action == 0:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position = "ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 1
+                    step = "turn"
+                    action = "find"
+                if step_action == 1:
+                    # walk in front of the guy
+                    name_position = "$POSE/GESTURE"
+                    if "$POSE/GESTURE" in liyt:
+                        name_position = "POSE/GESTURE"
+                    speak("going to" + liyt[name_position])
+                    feature = liyt[name_position]
+                    if step == "turn":
+                        move(0, -0.2)
+                    if step == "confirm":
+                        print("imwrited")
+                        file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
+                        with open(file_path, 'rb') as f:
+                            files = {'image': (file_path.split('/')[-1], f)}
+                            url = "http://192.168.50.147:8888/upload_image"
+                            response = requests.post(url, files=files)
+                            # remember to add the text question on the computer code
+                        print("Upload Status Code:", response.status_code)
+                        upload_result = response.json()
+                        print("sent image")
+                        who_help = "Is the guy " + pose
+                        gg = post_message_request("checkpeople", feature, who_help)
+                        print(gg)
+                        # get answer from gemini
+                        while True:
+                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            response_data = r.text
+                            dictt = json.loads(response_data)
+                            if dictt["Steps"] == 11:
+                                break
+                            pass
+                            time.sleep(2)
+                        aaa = dictt["Voice"].lower()
+                        print("answer:", aaa)
+                        if "yes" in aaa or "ys" in aaa:
+                            speak("found you the guying rising hand")
+                            action = "front"
+                            step = "none"
+                        else:
+                            action = "find"
+                            step = "turn"
+                        gg = post_message_request(-1, feature, who_help)
+
+                    if action == "find":
+                        detections = dnn_yolo1.forward(code_image)[0]["det"]
+                        # clothes_yolo
+                        # nearest people
+                        nx = 2000
+                        cx_n, cy_n = 0, 0
+                        CX_ER = 99999
+                        need_position = 0
+                        for i, detection in enumerate(detections):
+                            # print(detection)
+                            x1, y1, x2, y2, score, class_id = map(int, detection)
+                            score = detection[4]
+                            cx = (x2 - x1) // 2 + x1
+                            cy = (y2 - y1) // 2 + y1
+                            # depth=find_depsth
+                            _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                            # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                            if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320 - cx) < CX_ER:
+                                need_position = [x1, y1, x2, y2, cx, cy]
+                                # ask gemini
+                                cv2.rectangle(code_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                                cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                                print("people distance", d)
+                                CX_ER = 320 - cx
+                        if need_position != 0:
+                            h, w, c = code_image.shape
+                            x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+                            e = w // 2 - cx2
+                            v = 0.001 * e
+                            if v > 0:
+                                v = min(v, 0.3)
+                            if v < 0:
+                                v = max(v, -0.3)
+                            move(0, v)
+                            print(e)
+                            output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                            face_box = [x1, y1, x2, y2]
+                            box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                            fh, fw = abs(x1 - x2), abs(y1 - y2)
+                            cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                            if abs(e) <= 5:
+                                # speak("walk")
+                                action = "none"
+                                step = "confirm"
+                                print("turned")
+                                move(0, 0)
+
+                    if action == "front":
+                        speed = 0.2
+                        h, w, c = code_image.shape
+                        cx, cy = w // 2, h // 2
+                        for i in range(cy + 1, h):
+                            if _depth2[cy][cx] == 0 or 0 < _depth2[i][cx] < _depth2[cy][cx]:
+                                cy = i
+                        _, _, d = get_real_xyz(_depth2, cx, cy, 2)
+                        print("depth", d)
+                        if d != 0 and d <= 700:
+                            action = "speak"
+                            move(0, 0)
+                        else:
+                            move(0.2, 0)
+                    if action == "speak":
+                        speak("hi nigga can u stand in front of me and I will guild u now")
+                        action = 1
+                        step = "none"
+                        step_action = 3
+                if step_action == 3:
+                    name_position = "$ROOM2"
+                    if "$ROOM2" in liyt:
+                        name_position = "ROOM2"
+                    speak("going to " + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    speak("dear guest here is "+liyt[name_position]+" and I will go back now")
+                    step_action = 3
+                if step_action == 4:
+                    speak("going to " + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
+            #Speech1
+            elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
                 liyt = Q2.json
-                num1, num2, num3 = location1[liyt["ROOM"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                clear_costmaps
-                # guide him/her to another room
-                num1, num2, num3 = location1[liyt["PLACE"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                clear_costmaps
-                # walk in front of the guy
-                find_walk_in_front(code_image, code_depth)
-                # answer guy quetion, send request
-                answer_question()
-                # back
-                num1, num2, num3 = location2["starting point"]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                time.sleep(1)
-                clear_costmaps
+                if step_action == 0:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position = "ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                if step_action == 1:
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    if action == "speak":
+                        speak("hi nigga can u stand in front of me")
+                        action = 1
+                        step = "none"
+                        step_action = 2
+                if step_action == 2: #get text
+                    #question detect
+                    s=s.lower()
+                    now = datetime.now()
+                    s = s.lower()
+                    current_time = now.strftime("%H:%M:%S")
+                    current_month = now.strftime("%B")  # Full month name
+                    current_day_name = now.strftime("%A")  # Full weekday name
+                    day_of_month = now.strftime("%d")
+                    answer="none"
+                    none_cnt=0
+                    speak("dear guest please speak complete sentence after the")
+                    playsound("nigga2.mp3")
+                    speak("sound")
+                    time.sleep(0.5)
+                    speak("for example hi robot what day is it today")
+                    time.sleep(0.5)
+                    playsound("nigga2.mp3")
+                    while True:
+                        if "what" in s:
+                            if "today" in s:
+                                answer = f"It is {current_month} {day_of_month}"
+                            elif "team" in s and "name" in s:
+                                answer = "My team's name is FAMBOT"
+                            elif "tomorrow" in s:
+                                answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
+                            elif "your" in s and "name" in s:
+                                answer = "My name is FAMBOT robot"
+                            elif "time" in s:
+                                answer = f"It is {current_time}"
+                            elif "capital" in s or "shiga" in s:
+                                answer = "Ōtsu is the capital of Shiga Prefecture, Japan"
+                            elif "venue" in s in s or "2025" in 2 or "open" in s:
+                                answer = "The name of the venue is Shiga Daihatsu Arena"
+                            elif "week" in s:
+                                answer = f"It is {current_day_name}"
+                            elif "month" in s:
+                                answer = f"It is {day_of_month}"
+                            elif "plus" in s or "half":
+                                answer = "It is 1.5"
+                            elif "back" in s or "bird" in s:
+                                answer = "It is the hummingbird"
+                            elif "mammal" in s or "fly" in s:
+                                answer = "It is the bat"
+                            elif "broken" in s:
+                                answer = "An egg"
+                            elif "tell" in s and "about" in s:
+                                answer = "I am a home robot called fambot and I am 4 years old in 2025"
+                            else:
+                                answer = "none"
+
+                        elif "where" in s:
+                            if "from" in s:
+                                answer = "I am from Macau Puiching middle school, Macau China"
+                            else:
+                                answer = "none"
+
+                        elif "how" in s:
+                            if "member" in s or "team" in s:
+                                answer = "We have 4 members in our team"
+                            elif "day" in s or "week" in s:  # Duplicate from 'what' questions
+                                answer = "There are seven days in a week"
+                            else:
+                                answer = "none"
+
+                        elif "who" in s:
+                            if "leader" in s:
+                                answer = "Our Team leader is Wu Iat Long"
+                            else:
+                                answer = "none"
+
+                        else:
+                            answer = "none"
+                        none_cnt+=1
+                        if answer == "none" and none_cnt>=20 and s!=pre_s:
+                            speak("can u please speak it again")
+                            none_cnt=0
+                        else:
+                            speak(answer)
+                            break
+                    step_action = 3
+                if step_action == 3:
+                    post_message_request("answer_list", "", question)
+                    while True:
+                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                        response_data = r.text
+                        dictt = json.loads(response_data)
+                        if dictt["Steps"] == "answer1":
+                            break
+                        pass
+                        time.sleep(2)
+
+                    post_message_request(-1, "", question)
+                    speak(dictt["answer"])
+                    time.sleep(1)
+                    speak("I will go back now bye bye")
+                    step_action = 4
+                if step_action == 4:
+                    speak("going to " + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
             # Speech2
-            elif "Speech2" in command_type or ("Mani" in command_type and "1" in command_type):
+            elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
                 liyt = Q2.json
-                num1, num2, num3 = location1[liyt["ROOM"]]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                clear_costmaps
-                # walk in front of the guy
-                find_walk_in_front(code_image, code_depth)
-                # answer guy quetion, send request, Talk list
-                speak("the question")
-                # back
-                num1, num2, num3 = location2["starting point"]
-                chassis.move_to(num1, num2, num3)
-                while not rospy.is_shutdown():
-                    # 4. Get the chassis status.
-                    code = chassis.status_code
-                    text = chassis.status_text
-                    if code == 3:
-                        break
-                time.sleep(1)
-                clear_costmaps
+                if step_action == 0:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" in liyt:
+                        name_position = "ROOM1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                if step_action == 1:
+                    # walk in front of the guy
+                    name_position = "$POSE/GESTURE"
+                    if "$POSE/GESTURE" in liyt:
+                        name_position = "POSE/GESTURE"
+                    speak("going to" + liyt[name_position])
+                    feature = liyt[name_position]
+                    if step == "turn":
+                        move(0, -0.2)
+                    if step == "confirm":
+                        print("imwrited")
+                        file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
+                        with open(file_path, 'rb') as f:
+                            files = {'image': (file_path.split('/')[-1], f)}
+                            url = "http://192.168.50.147:8888/upload_image"
+                            response = requests.post(url, files=files)
+                            # remember to add the text question on the computer code
+                        print("Upload Status Code:", response.status_code)
+                        upload_result = response.json()
+                        print("sent image")
+                        who_help = "Is the guy " + pose
+                        gg = post_message_request("checkpeople", feature, who_help)
+                        print(gg)
+                        # get answer from gemini
+                        while True:
+                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            response_data = r.text
+                            dictt = json.loads(response_data)
+                            if dictt["Steps"] == 11:
+                                break
+                            pass
+                            time.sleep(2)
+                        aaa = dictt["Voice"].lower()
+                        print("answer:", aaa)
+                        if "yes" in aaa or "ys" in aaa:
+                            speak("found you the guying rising hand")
+                            action = "front"
+                            step = "none"
+                        else:
+                            action = "find"
+                            step = "turn"
+                        gg = post_message_request(-1, feature, who_help)
+
+                    if action == "find":
+                        detections = dnn_yolo1.forward(code_image)[0]["det"]
+                        # clothes_yolo
+                        # nearest people
+                        nx = 2000
+                        cx_n, cy_n = 0, 0
+                        CX_ER = 99999
+                        need_position = 0
+                        for i, detection in enumerate(detections):
+                            # print(detection)
+                            x1, y1, x2, y2, score, class_id = map(int, detection)
+                            score = detection[4]
+                            cx = (x2 - x1) // 2 + x1
+                            cy = (y2 - y1) // 2 + y1
+                            # depth=find_depsth
+                            _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                            # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                            if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320 - cx) < CX_ER:
+                                need_position = [x1, y1, x2, y2, cx, cy]
+                                # ask gemini
+                                cv2.rectangle(code_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                                cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                                print("people distance", d)
+                                CX_ER = 320 - cx
+                        if need_position != 0:
+                            h, w, c = code_image.shape
+                            x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+                            e = w // 2 - cx2
+                            v = 0.001 * e
+                            if v > 0:
+                                v = min(v, 0.3)
+                            if v < 0:
+                                v = max(v, -0.3)
+                            move(0, v)
+                            print(e)
+                            output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                            face_box = [x1, y1, x2, y2]
+                            box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                            fh, fw = abs(x1 - x2), abs(y1 - y2)
+                            cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                            if abs(e) <= 5:
+                                # speak("walk")
+                                action = "none"
+                                step = "confirm"
+                                print("turned")
+                                move(0, 0)
+
+                    if action == "front":
+                        speed = 0.2
+                        h, w, c = code_image.shape
+                        cx, cy = w // 2, h // 2
+                        for i in range(cy + 1, h):
+                            if _depth2[cy][cx] == 0 or 0 < _depth2[i][cx] < _depth2[cy][cx]:
+                                cy = i
+                        _, _, d = get_real_xyz(_depth2, cx, cy, 2)
+                        print("depth", d)
+                        if d != 0 and d <= 700:
+                            action = "speak"
+                            move(0, 0)
+                        else:
+                            move(0.2, 0)
+                    if action == "speak":
+                        action = 1
+                        step = "none"
+                        step_action = 2
+                if step_action==2:
+
+                    name_position = "$TELL_LIST"
+                    if "$TELL_LIST" in liyt:
+                        name_position = "TELL_LIST"
+                    speak("going to" + liyt[name_position])
+                    question = "My question is "+liyt[name_position]
+                    post_message_request("talk_list","",question)
+                    while True:
+                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                        response_data = r.text
+                        dictt = json.loads(response_data)
+                        if dictt["Steps"] == "answer2":
+                            break
+                        pass
+                        time.sleep(2)
+
+                    post_message_request(-1, "", question)
+                    speak(dictt["answer"])
+                    time.sleep(1)
+                    speak("I will go back now bye bye")
+                    step_action=3
+                if step_action == 3:
+                    speak("going to " + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
             else:
                 speak("I can't do it")
                 break
