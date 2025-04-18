@@ -240,7 +240,7 @@ while True:
             "Question1": "None",
             "Question2": "None",
             "Question3": "None",
-            "Steps": "answer",
+            "Steps": "answer2",
             "Voice": "None",
             "Questionasking": "talk_list",
             "answer": response.text
@@ -292,7 +292,7 @@ while True:
             "Question1": "None",
             "Question2": "None",
             "Question3": "None",
-            "Steps": "answer",
+            "Steps": "answer1",
             "Voice": "answer_list",
             "Questionasking": "None",
             "answer": response.text
