@@ -7,8 +7,10 @@ questions = {
     "Question1": "Question1",
     "Question2": "Question2",
     "Question3": "Question3",
-    "Steps" : 2,
-    "Voice" : "Voice"
+    "Steps" : -1,
+    "Voice" : "Voice",
+    "Questionasking":"None",
+    "answer":"None"
 }
 
 @app.route("/Fambot", methods=['GET', 'POST'])
