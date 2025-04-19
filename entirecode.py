@@ -628,13 +628,15 @@ if __name__ == "__main__":
     rospy.Subscriber("/voice/text", Voice, callback_voice)
     while True:
         if "start" in s:
+            speak("going to" + "starting point")
+            walk_to(locations["starting point"])
             break
     step="none"
     confirm_command = 0
     for i in range(3):
         qr_code_detector = cv2.QRCodeDetector()
         data=0
-        spaek("please scan your qr code in front of my camera")
+        speak("please scan your qr code in front of my camera")
         while True:
             print("step1")
             if _frame2 is None: continue
@@ -718,25 +720,25 @@ if __name__ == "__main__":
                     if "$ROOM1" in liyt:
                         name_position="ROOM1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action=1
                 if step_action==1:
                     name_position = "$PLACE1"
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action=2
                 if step_action==2:
                     name_position = "$PLACE2"
                     if "$PLACE2" in liyt:
                         name_position = "PLACE2"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action=3
                 if step_action==3:
                     speak("going to" + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    walk_to(locations["starting point"])
                     step_action=4
                     break
             #Manipulation2 just walk
@@ -746,21 +748,21 @@ if __name__ == "__main__":
                     if "$ROOM1" in liyt:
                         name_position = "ROOM1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action = 1
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE1"
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action = 4
                     break
             #Vision'''
@@ -776,13 +778,13 @@ if __name__ == "__main__":
                         if "$ROOM1" in liyt:
                             name_position = "ROOM1"
                         speak("going to" + liyt[name_position])
-                        walk_to(liyt[name_position])
+                        walk_to(locations[liyt[name_position]])
                     else:
                         name_position = "$PLACE1"
                         if "$PLACE1" in liyt:
                             name_position = "PLACE1"
                         speak("going to" + liyt[name_position])
-                        walk_to(liyt[name_position])
+                        walk_to(locations[liyt[name_position]])
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
@@ -816,7 +818,7 @@ if __name__ == "__main__":
                 if step_action == 2:
                     # back
                     speak("going to" + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    walk_to(locations["starting point"])
                     break
             elif (("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type))):
                 if step_action == 0:
@@ -825,7 +827,7 @@ if __name__ == "__main__":
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
@@ -859,7 +861,7 @@ if __name__ == "__main__":
                 if step_action == 2:
                     # back
                     speak("going to" + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    walk_to(locations["starting point"])
                     break
             elif ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
@@ -868,7 +870,7 @@ if __name__ == "__main__":
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action = 1
                 if step_action == 1:
                     if "height" in user_input or "tall" in user_input:
@@ -1017,7 +1019,7 @@ if __name__ == "__main__":
                 if step_action == 2:
                     # back
                     speak("going to" + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    walk_to(locations["starting point"])
                     break
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
@@ -1027,7 +1029,7 @@ if __name__ == "__main__":
                     if "$ROOM1" in liyt:
                         name_position = "ROOM1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[liyt[name_position]])
                     step_action=1
                     step="turn"
                     action = "find"
@@ -1036,7 +1038,6 @@ if __name__ == "__main__":
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" in liyt:
                         name_position = "POSE/GESTURE"
-                    speak("going to" + liyt[name_position])
                     feature=liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
@@ -1192,7 +1193,7 @@ if __name__ == "__main__":
                     move(x, z)
                 if step_action == 3:
                     speak("going to" + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    walk_to(locations["starting point"])
                     break
             # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
@@ -1336,13 +1337,13 @@ if __name__ == "__main__":
                     if "$ROOM1" in liyt:
                         name_position = "ROOM1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[name_position])
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[name_position])
                     if action == "speak":
                         speak("hi nigga can u stand in front of me")
                         action = 1
@@ -1446,8 +1447,8 @@ if __name__ == "__main__":
                     speak("I will go back now bye bye")
                     step_action = 4
                 if step_action == 4:
-                    speak("going to " + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    speak("going to " + "starting point")
+                    walk_to(locations["starting point"])
                     break
             # Speech2
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
@@ -1457,13 +1458,12 @@ if __name__ == "__main__":
                     if "$ROOM1" in liyt:
                         name_position = "ROOM1"
                     speak("going to" + liyt[name_position])
-                    walk_to(liyt[name_position])
+                    walk_to(locations[name_position])
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" in liyt:
                         name_position = "POSE/GESTURE"
-                    speak("going to" + liyt[name_position])
                     feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
@@ -1570,7 +1570,6 @@ if __name__ == "__main__":
                     name_position = "$TELL_LIST"
                     if "$TELL_LIST" in liyt:
                         name_position = "TELL_LIST"
-                    speak("going to" + liyt[name_position])
                     question = "My question is "+liyt[name_position]
                     post_message_request("talk_list","",question)
                     while True:
@@ -1588,10 +1587,9 @@ if __name__ == "__main__":
                     speak("I will go back now bye bye")
                     step_action=3
                 if step_action == 3:
-                    speak("going to " + liyt["starting point"])
-                    walk_to(liyt["starting point"])
+                    speak("going to " + "starting point")
+                    walk_to(locations["starting point"])
                     break
             else:
                 speak("I can't do it")
                 break
-            
