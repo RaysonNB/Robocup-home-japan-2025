@@ -568,6 +568,27 @@ class FollowMe(object):
 
         return cur_x, cur_z, frame, "yes"
 
+def highlightFace(net, frame, conf_threshold=0.7):
+    frameOpencvDnn = frame.copy()
+    frameHeight = frameOpencvDnn.shape[0]
+    frameWidth = frameOpencvDnn.shape[1]
+    blob = cv2.dnn.blobFromImage(frameOpencvDnn, 1.0, (300, 300), [104, 117, 123], True, False)
+
+    net.setInput(blob)
+    detections = net.forward()
+    faceBoxes = []
+    for i in range(detections.shape[2]):
+        confidence = detections[0, 0, i, 2]
+
+        if confidence > conf_threshold:
+            x1 = int(detections[0, 0, i, 3] * frameWidth)
+            y1 = int(detections[0, 0, i, 4] * frameHeight)
+            x2 = int(detections[0, 0, i, 5] * frameWidth)
+            y2 = int(detections[0, 0, i, 6] * frameHeight)
+            faceBoxes.append([x1, y1, x2, y2])
+            cv2.rectangle(frameOpencvDnn, (x1, y1), (x2, y2), (0, 255, 0), int(round(frameHeight / 150)), 8)
+    return frameOpencvDnn, faceBoxes
+
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
@@ -589,6 +610,14 @@ if __name__ == "__main__":
     follow_cnt=0
     action=0
     _fw=FollowMe()
+    faceProto = "opencv_face_detector.pbtxt"
+    faceModel = "opencv_face_detector_uint8.pb"
+    ageProto = "age_deploy.prototxt"
+    ageModel = "age_net.caffemodel"
+
+    faceNet = cv2.dnn.readNet(faceModel, faceProto)
+    ageNet = cv2.dnn.readNet(ageModel, ageProto)
+
     # step_action
     # add action for all code
     # Step 0 first send
@@ -601,9 +630,11 @@ if __name__ == "__main__":
         if "start" in s:
             break
     step="none"
+    confirm_command = 0
     for i in range(3):
         qr_code_detector = cv2.QRCodeDetector()
         data=0
+        spaek("please scan your qr code in front of my camera")
         while True:
             print("step1")
             if _frame2 is None: continue
@@ -619,8 +650,15 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        confirm_recording(data)
         #confirm
+        if confirm_command==0:
+            speak("Is your command "+str(data))
+            speak("robot yes or robot no after the sound")
+            confirm_command=1
+        while True:
+            if "yes" in s:
+                speak("ok, I will go now")
+                break   
         user_input = data
         # post question
         gg = post_message_request("first", user_input,"")  # step
@@ -653,9 +691,15 @@ if __name__ == "__main__":
         Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
         dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
         pre_s=""
+        name_cnt="none"
+        ageList = ['1', '5', '10', '17', '27', '41', '50', '67']
+        # Initialize video capture
+        #video = cv2.VideoCapture(args.video if args.video else 0)
+        padding = 20
         while not rospy.is_shutdown():
             # voice check
             # break
+            confirm_command=0
             if s != "" and s != pre_s:
                 print(s)
                 pre_s = s
@@ -720,7 +764,7 @@ if __name__ == "__main__":
                     step_action = 4
                     break
             #Vision'''
-            if ("vision (enumeration)1" in command_type or (
+            elif ("vision (enumeration)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "enume" in command_type)) or (
                     "vision (enumeration)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "enume" in command_type)):
@@ -775,9 +819,206 @@ if __name__ == "__main__":
                     walk_to(liyt["starting point"])
                     break
             elif (("vision (descridption)1" in command_type or ("vision" in command_type and "1" in command_type and "descri" in command_type))):
-                pass
+                if step_action == 0:
+                    liyt = Q2
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 1
+                if step_action == 1:
+                    time.sleep(2)
+                    print("take picture")
+                    # save frame
+                    output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                    cv2.imwrite(output_dir + "GSPR.jpg", code_image)
+                    # ask gemini
+                    url = "http://192.168.50.147:8888/upload_image"
+                    file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
+                    with open(file_path, 'rb') as f:
+                        files = {'image': (file_path.split('/')[-1], f)}
+                        response = requests.post(url, files=files)
+                        # remember to add the text question on the computer code
+                    print("Upload Status Code:", response.status_code)
+                    upload_result = response.json()
+                    print("sent image")
+                    gg = post_message_request("file", user_input, "")
+                    print(gg)
+                    # get answer from gemini
+                    while True:
+                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
+                        response_data = r.text
+                        dictt = json.loads(response_data)
+                        if dictt["Steps"] == 10:
+                            break
+                        pass
+                        time.sleep(2)
+                    step_action = 2
+                    speak(dictt["Voice"])
+                if step_action == 2:
+                    # back
+                    speak("going to" + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
             elif ("vision (descridption)2" in command_type or ("vision" in command_type and "2" in command_type and "descri" in command_type)):
-                pass
+                if step_action == 0:
+                    liyt = Q2
+                    name_position = "$PLACE1"
+                    if "$PLACE1" in liyt:
+                        name_position = "PLACE1"
+                    speak("going to" + liyt[name_position])
+                    walk_to(liyt[name_position])
+                    step_action = 1
+                if step_action == 1:
+                    if "height" in user_input or "tall" in user_input:
+                        poses = net_pose.forward(code_image)
+                        if len(poses) > 0:
+                            YN = -1
+                            a_num = 5
+                            for issack in range(len(poses)):
+                                yu = 0
+                                if poses[issack][5][2] > 0:
+                                    YN = 0
+                                    a_num, b_num = 5, 5
+                                    A = list(map(int, poses[issack][a_num][:2]))
+                                    if (640 >= A[0] >= 0 and 320 >= A[1] >= 0):
+                                        ax, ay, az = get_real_xyz(code_depth, A[0], A[1], 2)
+                                        print(ax, ay)
+                                        if az <= 2500 and az != 0:
+                                            yu += 1
+                                if yu >= 1:
+                                    break
+                        if len(A) != 0 and yu >= 1:
+                            cv2.circle(code_image, (A[0], A[1]), 3, (0, 255, 0), -1)
+                            target_y = ay
+                            print("your height is", (1000 - target_y + 330) / 10.0)
+                            final_height = (1000 - target_y + 330) / 10.0
+                            step_action = 2
+                    if "age" in user_input or "old" in user_input:
+                        resultImg, faceBoxes = highlightFace(faceNet, code_image)
+
+                        if not faceBoxes:
+                            print("No face detected")
+                            # continue
+                        for faceBox in faceBoxes:
+                            face = code_image[max(0, faceBox[1] - padding):
+                                            min(faceBox[3] + padding, code_image.shape[0] - 1),
+                                   max(0, faceBox[0] - padding):
+                                   min(faceBox[2] + padding, code_image.shape[1] - 1)]
+                            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227),
+                                                         (78.4263377603, 87.7689143744, 114.895847746),
+                                                         swapRB=False)
+
+                            ageNet.setInput(blob)
+                            agePreds = ageNet.forward()
+                            age = ageList[agePreds[0].argmax()]
+                            print(age)
+                            final_age = age
+                            cv2.putText(resultImg, f'Age: {age}', (faceBox[0], faceBox[1] - 10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+                            if "face" not in age and "not" not in age:
+                                step_action = 2
+                    elif "color" in user_input or "shirt" in user_input:
+                        detections = dnn_yolo1.forward(code_image)[0]["det"]
+                        # clothes_yolo
+                        # nearest people
+                        nx = 2000
+                        cx_n, cy_n = 0, 0
+                        CX_ER = 99999
+                        need_position = 0
+                        for i, detection in enumerate(detections):
+                            # print(detection)
+                            x1, y1, x2, y2, score, class_id = map(int, detection)
+                            score = detection[4]
+                            cx = (x2 - x1) // 2 + x1
+                            cy = (y2 - y1) // 2 + y1
+                            # depth=find_depsth
+                            _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                            # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                            if score > 0.65 and class_id == 0 and d <= nx and d != 0 and d < CX_ER:
+                                need_position = [x1, y1, x2, y2, cx, cy]
+                                # ask gemini
+                                cv2.rectangle(code_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                                cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                                print("people distance", d)
+                                CX_ER = d
+                        if action1 == 0:
+                            output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                            x1, y1, x2, y2 = need_position[0], need_position[1], need_position[2], need_position[3]
+                            face_box = [x1, y1, x2, y2]
+                            box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                            fh, fw = abs(x1 - x2), abs(y1 - y2)
+                            cv2.imwrite(output_dir + "GSPR_color.jpg", box_roi)
+                            print("writed")
+                            file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_color.jpg"
+                            with open(file_path, 'rb') as f:
+                                files = {'image': (file_path.split('/')[-1], f)}
+                                url = "http://192.168.50.147:8888/upload_image"
+                                response = requests.post(url, files=files)
+                                # remember to add the text question on the computer code
+                            print("Upload Status Code:", response.status_code)
+                            upload_result = response.json()
+                            print("sent image")
+                            who_help = 0
+                            feature = 0
+                            gg = post_message_request("color", feature, who_help)
+                            print(gg)
+                            # get answer from gemini
+                            while True:
+                                r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                                response_data = r.text
+                                dictt = json.loads(response_data)
+                                if dictt["Steps"] == 12:
+                                    break
+                                pass
+                                time.sleep(2)
+                            aaa = dictt["Voice"].lower()
+                            speak("answer:", aaa)
+                            gg = post_message_request("-1", feature, who_help)
+                            action1 = 1
+                            step_action = 2
+                    elif "name" in user_input:
+                        # jack, check, track
+                        # aaron, ellen, evan
+                        # angel
+                        # adam, ada, aiden
+                        # Vanessa, lisa, Felicia
+                        # chris
+                        # william
+                        # max, mix
+                        # hunter
+                        # olivia
+                        if step_speak == 0:
+                            speak("hello nigga can u speak your name to me")
+                            speak("speak it in complete sentence, for example, my name is fambot")
+                            speak("speak after the")
+                            playsound("nigga2.mp3")
+                            speak("sound")
+                            time.sleep(0.5)
+                            playsound("nigga2.mp3")
+                            step_speak = 1
+                        if step_speak == 1:
+                            if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
+                            if "aaron" in s or "ellen" in s or "evan" in s: name_cnt = "aaron"
+                            if "angel" in s: name_cnt = "angel"
+                            if "adam" in s or "ada" in s or "aiden" in s: name_cnt = "adam"
+                            if "vanessa" in s or "lisa" in s or "felicia" in s: name_cnt = "vanessa"
+                            if "chris" in s: name_cnt = "chris"
+                            if "william" in s: name_cnt = "william"
+                            if "max" in s or "mix" in s: name_cnt = "max"
+                            if "hunter" in s: name_cnt = "hunter"
+                            if "olivia" in s: name_cnt = "olivia"
+
+                            if name_cnt != "none":
+                                speak("hello " + name_cnt + " I gonna go now.")
+                                step_action=2
+                if step_action == 2:
+                    # back
+                    speak("going to" + liyt["starting point"])
+                    walk_to(liyt["starting point"])
+                    break
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
                 liyt = Q2.json
@@ -1137,7 +1378,7 @@ if __name__ == "__main__":
                                 answer = "My name is FAMBOT robot"
                             elif "time" in s:
                                 answer = f"It is {current_time}"
-                            elif "capital" in s or "shiga" in s:
+                            elif "capital" in s or "shiga" in s or "cap" in s:
                                 answer = "Ōtsu is the capital of Shiga Prefecture, Japan"
                             elif "venue" in s in s or "2025" in 2 or "open" in s:
                                 answer = "The name of the venue is Shiga Daihatsu Arena"
@@ -1181,7 +1422,7 @@ if __name__ == "__main__":
                         else:
                             answer = "none"
                         none_cnt+=1
-                        if answer == "none" and none_cnt>=20 and s!=pre_s:
+                        if answer == "none" and none_cnt>=30 and s!=pre_s:
                             speak("can u please speak it again")
                             none_cnt=0
                         else:
@@ -1259,7 +1500,6 @@ if __name__ == "__main__":
                             action = "find"
                             step = "turn"
                         gg = post_message_request(-1, feature, who_help)
-
                     if action == "find":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
@@ -1307,7 +1547,6 @@ if __name__ == "__main__":
                                 step = "confirm"
                                 print("turned")
                                 move(0, 0)
-
                     if action == "front":
                         speed = 0.2
                         h, w, c = code_image.shape
@@ -1355,3 +1594,4 @@ if __name__ == "__main__":
             else:
                 speak("I can't do it")
                 break
+            
