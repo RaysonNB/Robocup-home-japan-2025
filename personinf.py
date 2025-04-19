@@ -139,6 +139,7 @@ def callback_depth2(msg):
 def callback_voice(msg):
     global s
     s = msg.text
+    print(s)
 
 
 if __name__ == "__main__":
@@ -165,6 +166,7 @@ if __name__ == "__main__":
     _depth2 = None
     _sub_down_cam_depth = rospy.Subscriber("/camera/depth/image_raw", Image, callback_depth2)
     s = ""
+    rospy.Subscriber("/voice/text", Voice, callback_voice)
     print("cmd_vel")
     _cmd_vel = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
     print("arm")
@@ -179,12 +181,13 @@ if __name__ == "__main__":
     net_pose = HumanPoseEstimation(device_name="GPU")
     print("chassis")
 
-    ss = "acolorght"
+    ss = "name"
     final_height = 0
     final_age = 0
     action1 = 0
-    name_cnt = 0
+    name_cnt = "none"
     step_speak = 0
+    pre_s=""
     while not rospy.is_shutdown():
         # voice check
         # break
@@ -332,25 +335,23 @@ if __name__ == "__main__":
                 playsound("nigga2.mp3")
                 step_speak = 1
             if step_speak == 1:
-                if "check" in s or "track" in s or "jack" in s: name_cnt+=1
-                if "aaron" in s or "ellen" in s or "evan" in s: name_cnt += 1
-                if "angel" in s: name_cnt += 1
-                if "adam" in s or "ada" in s or "aiden" in s: name_cnt += 1
-                if "vanessa" in s or "lisa" in s or "felicia" in s: name_cnt += 1
-                if "chris" in s: name_cnt += 1
-                if "william" in s: name_cnt += 1
-                if "max" in s or "mix" in s: name_cnt += 1
-                if "hunter" in s: name_cnt += 1
-                if "olivia" in s: name_cnt += 1
+                s=s.lower()
+                print("s",s)
+                if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
+                if "aaron" in s or "ellen" in s or "evan" in s: name_cnt = "aaron"
+                if "angel" in s: name_cnt ="angel"
+                if "adam" in s or "ada" in s or "aiden" in s: name_cnt ="adam"
+                if "vanessa" in s or "lisa" in s or "felicia" in s: name_cnt ="vanessa"
+                if "chris" in s: name_cnt ="chris"
+                if "william" in s: name_cnt ="william"
+                if "max" in s or "mix" in s: name_cnt ="max"
+                if "hunter" in s: name_cnt = "hunter"
+                if "olivia" in s: name_cnt ="olivia"
 
-                if name_cnt>=1:
-                    step_speak=2
-            if step_speak==2:
-                break
-        frmaeshow = frame.copy()
-        cv2.imshow("frame", resultImg)
+                if name_cnt!="none":
+                    speak("hello "+name_cnt+" I gonna go now.")
+                    break
+        cv2.imshow("frame", up_image)
         key = cv2.waitKey(1)
         if key in [ord('q'), 27]:
             break
-
-
