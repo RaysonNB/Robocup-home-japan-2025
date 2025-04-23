@@ -622,21 +622,22 @@ if __name__ == "__main__":
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
-    walk_to("starting point")
+    #walk_to("starting point")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
     speak("please say start, then I will go to the host point")
     print("yolov8")
     Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
+    '''
     while True:
-        if "start" in s:
-            break
+        if "start" in s or "stop" in s:
+            break'''
     step = "none"
     confirm_command = 0
     for i in range(3):
         walk_to("host")
-        if step_action=="end1":
+        if step_action==101:
             speak("here you are")
             time.sleep(2)
         qr_code_detector = cv2.QRCodeDetector()
@@ -716,7 +717,8 @@ if __name__ == "__main__":
         while not rospy.is_shutdown():
             # voice check
             # break
-            if "end" in step_action:
+            rospy.Rate(10).sleep()
+            if step_action==100 or step_action=101:
                 break
             confirm_command = 0
             if s != "" and s != pre_s:
@@ -728,7 +730,7 @@ if __name__ == "__main__":
                 print("no depth")
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
-            rospy.Rate(10).sleep()
+            
             cv2.imshow("frame", code_image)
             key = cv2.waitKey(1)
             if key in [ord('q'), 27]:
@@ -738,13 +740,13 @@ if __name__ == "__main__":
             if "manipulation1" in command_type or ("mani" in command_type and "1" in command_type):
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     name_position = "$PLACE1"
-                    if "$PLACE1" in liyt:
+                    if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
                     time.sleep(2)
@@ -752,7 +754,7 @@ if __name__ == "__main__":
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE2"
-                    if "$PLACE2" in liyt:
+                    if "$PLACE2" not in liyt:
                         name_position = "PLACE2"
                     walk_to(liyt[name_position])
                     step_action = "end"
@@ -760,18 +762,18 @@ if __name__ == "__main__":
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     name_position = "$PLACE1"
-                    if "$PLACE1" in liyt:
+                    if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
                     time.sleep(2)
                     speak("robot arm is in error")
-                    step_action = "end1"
+                    step_action = 101
             # Vision E 1,2
             elif ("vision (enumeration)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "enume" in command_type)) or (
@@ -782,12 +784,12 @@ if __name__ == "__main__":
                     liyt = Q2
                     if ("2" in command_type):
                         name_position = "$ROOM1"
-                        if "$ROOM1" in liyt:
+                        if "$ROOM1" not in liyt:
                             name_position = "ROOM1"
                         walk_to(liyt[name_position])
                     else:
                         name_position = "$PLACE1"
-                        if "$PLACE1" in liyt:
+                        if "$PLACE1" not in liyt:
                             name_position = "PLACE1"
                         walk_to(liyt[name_position])
                     step_action = 1
@@ -796,7 +798,8 @@ if __name__ == "__main__":
                     print("take picture")
                     # save frame
                     output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                    cv2.imwrite(output_dir + "GSPR.jpg", code_image)
+                    cv2.imshow("capture_img", _frame2)
+                    cv2.imwrite(output_dir + "GSPR.jpg", _frame2)
                     # ask gemini
                     url = "http://192.168.50.147:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
@@ -817,7 +820,7 @@ if __name__ == "__main__":
                         if dictt["Steps"] == 10:
                             break
                         time.sleep(2)
-                    step_action = "end"
+                    step_action = 100
                     speak(dictt["Voice"])
                     gg = post_message_request("-1", "", "")
             # vision D1
@@ -826,7 +829,7 @@ if __name__ == "__main__":
                 if step_action == 0:
                     liyt = Q2
                     name_position = "$PLACE1"
-                    if "$PLACE1" in liyt:
+                    if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
                     step_action = 1
@@ -835,7 +838,7 @@ if __name__ == "__main__":
                     print("take picture")
                     # save frame
                     output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                    cv2.imwrite(output_dir + "GSPR.jpg", code_image)
+                    cv2.imwrite(output_dir + "GSPR.jpg", _frame2)
                     # ask gemini
                     url = "http://192.168.50.147:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
@@ -856,7 +859,7 @@ if __name__ == "__main__":
                         if dictt["Steps"] == 10:
                             break
                         time.sleep(2)
-                    step_action = "end"
+                    step_action = 100
                     speak(dictt["Voice"])
                     gg = post_message_request("-1", "", "")
             # vision D2
@@ -865,7 +868,7 @@ if __name__ == "__main__":
                 if step_action == 0:
                     liyt = Q2
                     name_position = "$PLACE1"
-                    if "$PLACE1" in liyt:
+                    if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
                     step_action = 1
@@ -1013,14 +1016,14 @@ if __name__ == "__main__":
                                 speak("hello " + name_cnt + " I gonna go now.")
                                 step_action = 2
                 if step_action == 2:
-                    step_action="end"
+                    step_action=100
             # navigation 1
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                     step_action = 1
@@ -1029,7 +1032,7 @@ if __name__ == "__main__":
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
-                    if "$POSE/GESTURE" in liyt:
+                    if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
                     feature = liyt[name_position]
                     if step == "turn":
@@ -1065,7 +1068,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request(-1, feature, who_help)
+                        gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -1184,13 +1187,13 @@ if __name__ == "__main__":
                         print("turn_x_z:", x, z)
                     move(x, z)
                 if step_action == 3:
-                    step_action="end"
+                    step_action=100
             # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                     step_action = 1
@@ -1199,7 +1202,7 @@ if __name__ == "__main__":
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
-                    if "$POSE/GESTURE" in liyt:
+                    if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
                     speak("going to" + liyt[name_position])
                     feature = liyt[name_position]
@@ -1236,7 +1239,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request(-1, feature, who_help)
+                        gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -1307,22 +1310,22 @@ if __name__ == "__main__":
                         step_action = 3
                 if step_action == 3:
                     name_position = "$ROOM2"
-                    if "$ROOM2" in liyt:
+                    if "$ROOM2" not in liyt:
                         name_position = "ROOM2"
                     walk_to(liyt[name_position])
                     speak("dear guest here is " + liyt[name_position] + " and I will go back now")
-                    step_action = "end"
+                    step_action = 100
             # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                 if step_action == 1:
                     name_position = "$PLACE1"
-                    if "$PLACE1" in liyt:
+                    if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
                     if action == "speak":
@@ -1428,21 +1431,21 @@ if __name__ == "__main__":
                         time.sleep(2)
                     speak(dictt["answer"])
                     time.sleep(1)
-                    post_message_request(-1, "", "")'''
+                    post_message_request("-1", "", "")'''
                     speak("I will go back now bye bye")
-                    step_action = "end"
+                    step_action = 100
             # Speech2
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
-                    if "$ROOM1" in liyt:
+                    if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
                     walk_to(liyt[name_position])
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
-                    if "$POSE/GESTURE" in liyt:
+                    if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
                     feature = liyt[name_position]
                     if step == "turn":
@@ -1478,7 +1481,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request(-1, feature, who_help)
+                        gg = post_message_request("-1", feature, who_help)
                     if action == "find":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
@@ -1546,7 +1549,7 @@ if __name__ == "__main__":
                         step_action = 2
                 if step_action == 2:
                     name_position = "$TELL_LIST"
-                    if "$TELL_LIST" in liyt:
+                    if "$TELL_LIST" not in liyt:
                         name_position = "TELL_LIST"
                     question = "My question is " + liyt[name_position]
                     post_message_request("talk_list", "", question)
@@ -1557,11 +1560,11 @@ if __name__ == "__main__":
                         if dictt["Steps"] == "answer2":
                             break
                         time.sleep(2)
-                    post_message_request(-1, "", question)
+                    post_message_request("-1", "", question)
                     speak(dictt["answer"])
                     time.sleep(1)
                     speak("I will go back now bye bye")
-                    step_action = "end"
+                    step_action = 100
             else:
                 speak("I can't do it")
                 break
