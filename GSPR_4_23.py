@@ -11,7 +11,6 @@ import math
 from open_manipulator_msgs.srv import SetJointPosition, SetJointPositionRequest
 from open_manipulator_msgs.srv import SetKinematicsPose, SetKinematicsPoseRequest
 import time
-
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 from rospkg import RosPack
@@ -626,7 +625,7 @@ if __name__ == "__main__":
     #walk_to("starting point")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
-    speak("please say start, then I will go to the host point")
+    #speak("please say start, then I will go to the host point")
     print("yolov8")
     Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
@@ -672,7 +671,7 @@ if __name__ == "__main__":
             confirm_command = 1
         while True:
             if "yes" in s:
-                speak("ok, I will go now")
+                speak("ok")
                 break
         user_input = data
         # post question
@@ -693,7 +692,7 @@ if __name__ == "__main__":
         print(Q1)
         print(Q2)
         print(Q3)
-
+        speak(Q3)
         # say how the robot understand
         # speak(Q3[0])
         # divide
@@ -719,7 +718,7 @@ if __name__ == "__main__":
             # voice check
             # break
             rospy.Rate(10).sleep()
-            if step_action==100 or step_action=101:
+            if step_action==100 or step_action==101:
                 break
             confirm_command = 0
             if s != "" and s != pre_s:
@@ -758,7 +757,7 @@ if __name__ == "__main__":
                     if "$PLACE2" not in liyt:
                         name_position = "PLACE2"
                     walk_to(liyt[name_position])
-                    step_action = "end"
+                    step_action = 100
             # Manipulation2 just walk
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
                 if step_action == 0:
