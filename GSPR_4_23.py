@@ -230,15 +230,6 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
     _cmd_vel.publish(msg)
 
 
-def find_walk_in_front(image, depth):
-    # finding
-    pass
-
-
-def answer_question():
-    pass
-
-
 def post_message_request(step, s1, question):
     api_url = "http://192.168.50.147:8888/Fambot"
     my_todo = {"Question1": "None",
@@ -405,6 +396,7 @@ def check_item(name):
         corrected = corrected.replace("_", " ")
     return corrected
 
+clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
 
 def walk_to(name):
     if "none" not in name:
@@ -599,8 +591,9 @@ if __name__ == "__main__":
     rospy.loginfo("demo node start!")
     # open things
     chassis = RobotChassis()
-    clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
 
+    print("cmd_vel")
+    _cmd_vel = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
     # chassis = RobotChassis()
     # clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     net_pose = HumanPoseEstimation(device_name="GPU")
@@ -619,7 +612,7 @@ if __name__ == "__main__":
     faceModel = "opencv_face_detector_uint8.pb"
     ageProto = "age_deploy.prototxt"
     ageModel = "age_net.caffemodel"
-
+    step_action=0
     faceNet = cv2.dnn.readNet(faceModel, faceProto)
     ageNet = cv2.dnn.readNet(ageModel, ageProto)
 
@@ -691,7 +684,6 @@ if __name__ == "__main__":
             dictt = json.loads(response_data)
             if dictt["Steps"] == 1:
                 break
-            pass
             time.sleep(2)
         Q1 = dictt["Question1"]
         Q2 = dictt["Question2"]
@@ -719,6 +711,8 @@ if __name__ == "__main__":
         s = ""
         action1=0
         step_speak=0
+        age_cnt=0
+        failed_cnt=0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -753,6 +747,8 @@ if __name__ == "__main__":
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
+                    time.sleep(2)
+                    speak("robot arm is in error")
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE2"
@@ -773,6 +769,8 @@ if __name__ == "__main__":
                     if "$PLACE1" in liyt:
                         name_position = "PLACE1"
                     walk_to(liyt[name_position])
+                    time.sleep(2)
+                    speak("robot arm is in error")
                     step_action = "end1"
             # Vision E 1,2
             elif ("vision (enumeration)1" in command_type or (
@@ -809,7 +807,7 @@ if __name__ == "__main__":
                     print("Upload Status Code:", response.status_code)
                     upload_result = response.json()
                     print("sent image")
-                    gg = post_message_request("file", user_input, "")
+                    gg = post_message_request("Enumeration", user_input, "")
                     print(gg)
                     # get answer from gemini
                     while True:
@@ -818,7 +816,6 @@ if __name__ == "__main__":
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
                             break
-                        pass
                         time.sleep(2)
                     step_action = "end"
                     speak(dictt["Voice"])
@@ -849,7 +846,7 @@ if __name__ == "__main__":
                     print("Upload Status Code:", response.status_code)
                     upload_result = response.json()
                     print("sent image")
-                    gg = post_message_request("file", user_input, "")
+                    gg = post_message_request("Description", user_input, "")
                     print(gg)
                     # get answer from gemini
                     while True:
@@ -858,7 +855,6 @@ if __name__ == "__main__":
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
                             break
-                        pass
                         time.sleep(2)
                     step_action = "end"
                     speak(dictt["Voice"])
@@ -903,7 +899,7 @@ if __name__ == "__main__":
                             step_action = 2
                     if "age" in user_input or "old" in user_input:
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
-
+                        age_cnt+=1
                         if not faceBoxes:
                             print("No face detected")
                             # continue
@@ -915,7 +911,6 @@ if __name__ == "__main__":
                             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227),
                                                          (78.4263377603, 87.7689143744, 114.895847746),
                                                          swapRB=False)
-
                             ageNet.setInput(blob)
                             agePreds = ageNet.forward()
                             age = ageList[agePreds[0].argmax()]
@@ -923,7 +918,7 @@ if __name__ == "__main__":
                             final_age = age
                             cv2.putText(resultImg, f'Age: {age}', (faceBox[0], faceBox[1] - 10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
-                            if "face" not in age and "not" not in age:
+                            if "face" not in age and "not" not in age or age_cnt>=100:
                                 step_action = 2
                     elif "color" in user_input or "shirt" in user_input:
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -978,7 +973,6 @@ if __name__ == "__main__":
                                 dictt = json.loads(response_data)
                                 if dictt["Steps"] == 12:
                                     break
-                                pass
                                 time.sleep(2)
                             speak("answer: ", dictt["Voice"])
                             gg = post_message_request("-1", "", "")
@@ -1015,7 +1009,6 @@ if __name__ == "__main__":
                             if "max" in s or "mix" in s: name_cnt = "max"
                             if "hunter" in s: name_cnt = "hunter"
                             if "olivia" in s: name_cnt = "olivia"
-
                             if name_cnt != "none":
                                 speak("hello " + name_cnt + " I gonna go now.")
                                 step_action = 2
@@ -1062,7 +1055,6 @@ if __name__ == "__main__":
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
                                 break
-                            pass
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
@@ -1234,7 +1226,6 @@ if __name__ == "__main__":
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
                                 break
-                            pass
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
@@ -1349,77 +1340,82 @@ if __name__ == "__main__":
                     day_of_month = now1.strftime("%d")
                     answer = "none"
                     none_cnt = 0
-                    speak("dear guest please speak complete sentence after the")
+                    speak("dear guest please speak your question in complete sentence after the")
                     playsound("nigga2.mp3")
                     speak("sound")
                     time.sleep(0.5)
                     speak("for example hi robot what day is it today")
                     time.sleep(0.5)
                     playsound("nigga2.mp3")
-                    while True:
-                        if "what" in s:
-                            if "today" in s:
-                                answer = f"It is {current_month} {day_of_month}"
-                            elif "team" in s and "name" in s:
-                                answer = "My team's name is FAMBOT"
-                            elif "tomorrow" in s:
-                                answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
-                            elif "your" in s and "name" in s:
-                                answer = "My name is FAMBOT robot"
-                            elif "time" in s:
-                                answer = f"It is {current_time}"
-                            elif "capital" in s or "shiga" in s or "cap" in s:
-                                answer = "Ōtsu is the capital of Shiga Prefecture, Japan"
-                            elif "venue" in s in s or "2025" in 2 or "open" in s:
-                                answer = "The name of the venue is Shiga Daihatsu Arena"
-                            elif "week" in s:
-                                answer = f"It is {current_day_name}"
-                            elif "month" in s:
-                                answer = f"It is {day_of_month}"
-                            elif "plus" in s or "half":
-                                answer = "It is 1.5"
-                            elif "back" in s or "bird" in s:
-                                answer = "It is the hummingbird"
-                            elif "mammal" in s or "fly" in s:
-                                answer = "It is the bat"
-                            elif "broken" in s:
-                                answer = "An egg"
-                            elif "tell" in s and "about" in s:
-                                answer = "I am a home robot called fambot and I am 4 years old in 2025"
-                            else:
-                                answer = "none"
-
-                        elif "where" in s:
-                            if "from" in s:
-                                answer = "I am from Macau Puiching middle school, Macau China"
-                            else:
-                                answer = "none"
-
-                        elif "how" in s:
-                            if "member" in s or "team" in s:
-                                answer = "We have 4 members in our team"
-                            elif "day" in s or "week" in s:  # Duplicate from 'what' questions
-                                answer = "There are seven days in a week"
-                            else:
-                                answer = "none"
-
-                        elif "who" in s:
-                            if "leader" in s:
-                                answer = "Our Team leader is Wu Iat Long"
-                            else:
-                                answer = "none"
-
-                        else:
-                            answer = "none"
-                        none_cnt += 1
-                        if answer == "none" and none_cnt >= 30 and s != pre_s:
-                            speak("can u please speak it again")
-                            none_cnt = 0
-                        else:
-                            speak(answer)
-                            break
                     step_action = 3
                 if step_action == 3:
+                    if "what" in s:
+                        if "today" in s:
+                            answer = f"It is {current_month} {day_of_month}"
+                        elif "team" in s and "name" in s:
+                            answer = "My team's name is FAMBOT"
+                        elif "tomorrow" in s:
+                            answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
+                        elif "your" in s and "name" in s:
+                            answer = "My name is FAMBOT robot"
+                        elif "time" in s:
+                            answer = f"It is {current_time}"
+                        elif "capital" in s or "shiga" in s or "cap" in s:
+                            answer = "Ōtsu is the capital of Shiga Prefecture, Japan"
+                        elif "venue" in s in s or "2025" in 2 or "open" in s:
+                            answer = "The name of the venue is Shiga Daihatsu Arena"
+                        elif "week" in s:
+                            answer = f"It is {current_day_name}"
+                        elif "month" in s:
+                            answer = f"It is {day_of_month}"
+                        elif "plus" in s or "half":
+                            answer = "It is 1.5"
+                        elif "back" in s or "bird" in s:
+                            answer = "It is the hummingbird"
+                        elif "mammal" in s or "fly" in s:
+                            answer = "It is the bat"
+                        elif "broken" in s:
+                            answer = "An egg"
+                        elif "tell" in s and "about" in s:
+                            answer = "I am a home robot called fambot and I am 4 years old in 2025"
+                        else:
+                            answer = "none"
+
+                    elif "where" in s:
+                        if "from" in s:
+                            answer = "I am from Macau Puiching middle school, Macau China"
+                        else:
+                            answer = "none"
+
+                    elif "how" in s:
+                        if "member" in s or "team" in s:
+                            answer = "We have 4 members in our team"
+                        elif "day" in s or "week" in s:  # Duplicate from 'what' questions
+                            answer = "There are seven days in a week"
+                        else:
+                            answer = "none"
+
+                    elif "who" in s:
+                        if "leader" in s:
+                            answer = "Our Team leader is Wu Iat Long"
+                        else:
+                            answer = "none"
+
+                    else:
+                        answer = "none"
+                    none_cnt += 1
+                    if failed_cnt>5:
+                        speak("I can't get your question, I gonna go back now")
+                        step_action = 4
+                    if answer == "none" and none_cnt >= 30 and s != pre_s:
+                        speak("can u please speak it again")
+                        none_cnt = 0
+                        failed_cnt+=1
+                    else:
+                        speak(answer)
+                        step_action = 4
+                if step_action == 4:
+                    '''
                     question=s
                     post_message_request("answer_list", "", question)
                     while True:
@@ -1432,7 +1428,7 @@ if __name__ == "__main__":
                         time.sleep(2)
                     speak(dictt["answer"])
                     time.sleep(1)
-                    post_message_request(-1, "", "")
+                    post_message_request(-1, "", "")'''
                     speak("I will go back now bye bye")
                     step_action = "end"
             # Speech2
@@ -1472,7 +1468,6 @@ if __name__ == "__main__":
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
                                 break
-                            pass
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
@@ -1561,9 +1556,7 @@ if __name__ == "__main__":
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == "answer2":
                             break
-                        pass
                         time.sleep(2)
-
                     post_message_request(-1, "", question)
                     speak(dictt["answer"])
                     time.sleep(1)
