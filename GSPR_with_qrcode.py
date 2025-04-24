@@ -591,8 +591,8 @@ locations = {
 #front 0 back 3.14 left 90 1.5 right 90 -1.5
 cout_location={
     "dining room": [1.153,3.338, 0],
-    "living room": [1.153,3.338, 3.14],
-    "hallway": [-0.397, 0.297, 0]
+    "hallway": [1.153,3.338, 3.14],
+    "living room": [-1.581, -0.345, 0]
 }
 def walk_to1(name):
     if "none" not in name:
@@ -666,7 +666,6 @@ if __name__ == "__main__":
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = input("command: ")
-
         while True:
             print("step1")
             if _frame2 is None: continue
