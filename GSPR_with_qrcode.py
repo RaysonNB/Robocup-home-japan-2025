@@ -666,7 +666,7 @@ if __name__ == "__main__":
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = input("command: ")
-        
+
         while True:
             print("step1")
             if _frame2 is None: continue
@@ -682,14 +682,14 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        
+
         # confirm
         if confirm_command == 0:
             speak("dear host your command is")
             time.sleep(0.3)
             speak(str(data))
             time.sleep(0.3)
-            speak("to confirm your command plase answer robot yes yes yes or robot no no no,     thank you")
+            speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
             confirm_command = 1
         while True:
             if "yes" in s:
@@ -1367,12 +1367,6 @@ if __name__ == "__main__":
                         step_action = 2
                 if step_action == 2:  # get text
                     # question detect
-                    now1 = datetime.now()
-                    s = s.lower()
-                    current_time = now1.strftime("%H:%M:%S")
-                    current_month = now1.strftime("%B")  # Full month name
-                    current_day_name = now1.strftime("%A")  # Full weekday name
-                    day_of_month = now1.strftime("%d")
                     answer = "none"
                     none_cnt = 0
                     speak("dear guest please speak your question in complete sentence after the")
@@ -1384,6 +1378,12 @@ if __name__ == "__main__":
                     playsound("nigga2.mp3")
                     step_action = 3
                 if step_action == 3:
+                    now1 = datetime.now()
+                    s = s.lower()
+                    current_time = now1.strftime("%H:%M:%S")
+                    current_month = now1.strftime("%B")  # Full month name
+                    current_day_name = now1.strftime("%A")  # Full weekday name
+                    day_of_month = now1.strftime("%d")
                     if "what" in s:
                         if "today" in s:
                             answer = f"It is {current_month} {day_of_month}"
@@ -1601,6 +1601,5 @@ if __name__ == "__main__":
                 speak("I can't do it")
                 break
         walk_to("host")
-        if step_action == 101:
-            speak("here you are")
-            time.sleep(2)
+        speak(final_speak_to_guest)
+        time.sleep(2)
