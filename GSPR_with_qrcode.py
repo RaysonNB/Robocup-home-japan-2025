@@ -741,6 +741,7 @@ if __name__ == "__main__":
         age_cnt = 0
         failed_cnt = 0
         final_speak_to_guest=""
+        feature="none"
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -815,12 +816,14 @@ if __name__ == "__main__":
                         name_position = "$ROOM1"
                         if "$ROOM1" not in liyt:
                             name_position = "ROOM1"
-                        walk_to1(liyt[name_position])
+                        if name_position in liyt:
+                            walk_to1(liyt[name_position])
                     else:
                         name_position = "$PLACE1"
                         if "$PLACE1" not in liyt:
                             name_position = "PLACE1"
-                        walk_to(liyt[name_position])
+                        if name_position in liyt:
+                            walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
@@ -860,7 +863,8 @@ if __name__ == "__main__":
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
@@ -891,7 +895,7 @@ if __name__ == "__main__":
                     step_action = 100
                     final_speak_to_guest=dictt["Voice"]
                     gg = post_message_request("-1", "", "")
-            # vision D2
+            # vision D2  ***
             elif ("vision (descridption)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
@@ -899,7 +903,8 @@ if __name__ == "__main__":
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     if "height" in user_input or "tall" in user_input:
@@ -1049,7 +1054,7 @@ if __name__ == "__main__":
                                 step_action = 2
                 if step_action == 2:
                     step_action = 100
-            # navigation 1
+            # navigation 1 ***
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
                 liyt = Q2.json
@@ -1057,7 +1062,8 @@ if __name__ == "__main__":
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                     step = "turn"
                     action = "find"
@@ -1066,7 +1072,8 @@ if __name__ == "__main__":
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
-                    feature = liyt[name_position]
+                    if name_position in liyt:
+                        feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
                     if step == "confirm":
@@ -1220,14 +1227,15 @@ if __name__ == "__main__":
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
-            # Navigation2
+            # Navigation2 ***
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                     step = "turn"
                     action = "find"
@@ -1236,8 +1244,8 @@ if __name__ == "__main__":
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
-                    speak("going to" + liyt[name_position])
-                    feature = liyt[name_position]
+                    if name_position in liyt:
+                        feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
                     if step == "confirm":
@@ -1344,22 +1352,25 @@ if __name__ == "__main__":
                     name_position = "$ROOM2"
                     if "$ROOM2" not in liyt:
                         name_position = "ROOM2"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     speak("dear guest here is " + liyt[name_position] + " and I will go back now")
                     step_action = 100
-            # Speech1
+            # Speech1 ***
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     if action == "speak":
                         speak("hi nigga can u stand in front of me")
                         action = 1
@@ -1466,20 +1477,24 @@ if __name__ == "__main__":
                     post_message_request("-1", "", "")'''
                     speak("I will go back now bye bye")
                     step_action = 100
-            # Speech2
+            # Speech2 ***
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
+                    step = "turn"
+                    action = "find"
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
-                    feature = liyt[name_position]
+                    if name_position in liyt:
+                        feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
                     if step == "confirm":
@@ -1578,6 +1593,7 @@ if __name__ == "__main__":
                     if action == "speak":
                         action = 1
                         step = "none"
+                        action="none"
                         step_action = 2
                 if step_action == 2:
                     name_position = "$TELL_LIST"
