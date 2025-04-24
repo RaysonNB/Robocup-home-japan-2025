@@ -396,7 +396,9 @@ def check_item(name):
         corrected = corrected.replace("_", " ")
     return corrected
 
+
 clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
+
 
 def walk_to(name):
     if "none" not in name:
@@ -586,6 +588,28 @@ locations = {
     "living room": [3.364, 2.991, 1.436],
     "hallway": [0.028, 3.514, 3.139]
 }
+#front 0 back 3.14 left 90 1.5 right 90 -1.5
+cout_location={
+    "dining room": [1.153,3.338, 0],
+    "living room": [1.153,3.338, 3.14],
+    "hallway": [-0.397, 0.297, 0]
+}
+def walk_to1(name):
+    if "none" not in name:
+        speak("going to " + str(name))
+        name = name.lower()
+        real_name = check_item(name)
+        num1, num2, num3 = cout_location[real_name]
+        chassis.move_to(num1, num2, num3)
+        while not rospy.is_shutdown():
+            # 4. Get the chassis status.
+            code = chassis.status_code
+            text = chassis.status_text
+            if code == 3:
+                break
+        time.sleep(1)
+        clear_costmaps
+
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
@@ -612,7 +636,7 @@ if __name__ == "__main__":
     faceModel = "opencv_face_detector_uint8.pb"
     ageProto = "age_deploy.prototxt"
     ageModel = "age_net.caffemodel"
-    step_action=0
+    step_action = 0
     faceNet = cv2.dnn.readNet(faceModel, faceProto)
     ageNet = cv2.dnn.readNet(ageModel, ageProto)
 
@@ -622,10 +646,10 @@ if __name__ == "__main__":
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
-    #walk_to("starting point")
+    # walk_to("starting point")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
-    #speak("please say start, then I will go to the host point")
+    # speak("please say start, then I will go to the host point")
     print("yolov8")
     Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
@@ -637,7 +661,7 @@ if __name__ == "__main__":
     confirm_command = 0
     for i in range(3):
         walk_to("host")
-        if step_action==101:
+        if step_action == 101:
             speak("here you are")
             time.sleep(2)
         qr_code_detector = cv2.QRCodeDetector()
@@ -701,7 +725,7 @@ if __name__ == "__main__":
         step_action = 0
         # continue
         liyt = Q2
-        gg = post_message_request("-1", "","")
+        gg = post_message_request("-1", "", "")
         pre_s = ""
         name_cnt = "none"
         ageList = ['1', '5', '10', '17', '27', '41', '50', '67']
@@ -710,15 +734,15 @@ if __name__ == "__main__":
         padding = 20
         confirm_command = 0
         s = ""
-        action1=0
-        step_speak=0
-        age_cnt=0
-        failed_cnt=0
+        action1 = 0
+        step_speak = 0
+        age_cnt = 0
+        failed_cnt = 0
         while not rospy.is_shutdown():
             # voice check
             # break
             rospy.Rate(10).sleep()
-            if step_action==100 or step_action==101:
+            if step_action == 100 or step_action == 101:
                 break
             confirm_command = 0
             if s != "" and s != pre_s:
@@ -730,7 +754,7 @@ if __name__ == "__main__":
                 print("no depth")
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
-            
+
             cv2.imshow("frame", code_image)
             key = cv2.waitKey(1)
             if key in [ord('q'), 27]:
@@ -786,7 +810,7 @@ if __name__ == "__main__":
                         name_position = "$ROOM1"
                         if "$ROOM1" not in liyt:
                             name_position = "ROOM1"
-                        walk_to(liyt[name_position])
+                        walk_to1(liyt[name_position])
                     else:
                         name_position = "$PLACE1"
                         if "$PLACE1" not in liyt:
@@ -877,7 +901,7 @@ if __name__ == "__main__":
                         poses = net_pose.forward(code_image)
                         yu = 0
                         ay = 0
-                        A=[]
+                        A = []
                         if len(poses) > 0:
                             YN = -1
                             a_num = 5
@@ -902,7 +926,7 @@ if __name__ == "__main__":
                             step_action = 2
                     if "age" in user_input or "old" in user_input:
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
-                        age_cnt+=1
+                        age_cnt += 1
                         if not faceBoxes:
                             print("No face detected")
                             # continue
@@ -921,7 +945,7 @@ if __name__ == "__main__":
                             final_age = age
                             cv2.putText(resultImg, f'Age: {age}', (faceBox[0], faceBox[1] - 10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
-                            if "face" not in age and "not" not in age or age_cnt>=100:
+                            if "face" not in age and "not" not in age or age_cnt >= 100:
                                 step_action = 2
                     elif "color" in user_input or "shirt" in user_input:
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -1016,7 +1040,7 @@ if __name__ == "__main__":
                                 speak("hello " + name_cnt + " I gonna go now.")
                                 step_action = 2
                 if step_action == 2:
-                    step_action=100
+                    step_action = 100
             # navigation 1
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
@@ -1187,7 +1211,7 @@ if __name__ == "__main__":
                         print("turn_x_z:", x, z)
                     move(x, z)
                 if step_action == 3:
-                    step_action=100
+                    step_action = 100
             # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
                 liyt = Q2.json
@@ -1407,13 +1431,13 @@ if __name__ == "__main__":
                     else:
                         answer = "none"
                     none_cnt += 1
-                    if failed_cnt>5:
+                    if failed_cnt > 5:
                         speak("I can't get your question, I gonna go back now")
                         step_action = 4
                     if answer == "none" and none_cnt >= 30 and s != pre_s:
                         speak("can u please speak it again")
                         none_cnt = 0
-                        failed_cnt+=1
+                        failed_cnt += 1
                     else:
                         speak(answer)
                         step_action = 4
@@ -1475,7 +1499,7 @@ if __name__ == "__main__":
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
                         if "yes" in aaa or "ys" in aaa:
-                            speak("found you the guy "+str(feature))
+                            speak("found you the guy " + str(feature))
                             action = "front"
                             step = "none"
                         else:
