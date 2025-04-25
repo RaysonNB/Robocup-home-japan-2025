@@ -666,7 +666,6 @@ if __name__ == "__main__":
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
-    '''
     walk_to("starting point")
 
     speak("please say start, then I will go to the host point")
@@ -675,7 +674,6 @@ if __name__ == "__main__":
     while True:
         if "start" in s or "stop" in s:
             break
-    '''
     step = "none"
     confirm_command = 0
     walk_to("host")
@@ -1274,10 +1272,13 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        speak("hi nigga can u stand behind me and I will follow u now")
-                        speak("please say robot stop when you arrived and I will go back")
-                        time.sleep(4)
-                        speak("hello dear guest please walk")
+                        speak("hello dear guest can u stand behind me and I will follow u now")
+                        time.sleep(7)
+                        speak("dear guest please say robot you can stop")
+                        time.sleep(0.5)
+                        speak("when you arrived and I will go back")
+                        time.sleep(0.5)
+                        speak("hello dear guest please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1285,12 +1286,10 @@ if __name__ == "__main__":
                 if action == 1:
                     s = s.lower()
                     print("listening", s)
-                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s:
+                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s:
                         action = 0
                         step_action = 3
-
                 if step_action == 2:
-
                     msg = Twist()
                     code_image = _frame2.copy()
                     poses = net_pose.forward(code_image)
@@ -1465,7 +1464,7 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        speak("hi nigga can u stand in front of me and I will guild u now")
+                        speak("hello dear guest can u stand in front of me and I will guild u now")
                         action = 1
                         step = "none"
                         step_action = 3
@@ -1493,7 +1492,7 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     if action == "speak":
-                        speak("hi nigga can u stand in front of me")
+                        speak("hello dear guest can u stand in front of me")
                         action = 1
                         step = "none"
                         step_action = 2
