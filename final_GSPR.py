@@ -668,6 +668,7 @@ if __name__ == "__main__":
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
+    '''
     walk_to("starting point")
 
     speak("please say start, then I will go to the host point")
@@ -675,7 +676,7 @@ if __name__ == "__main__":
 
     while True:
         if "start" in s or "stop" in s:
-            break
+            break'''
     step = "none"
     confirm_command = 0
     walk_to("host")
@@ -1502,6 +1503,8 @@ if __name__ == "__main__":
                         name_position = "ROOM1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    step_action=1
+                    action="speak"
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
@@ -1647,6 +1650,7 @@ if __name__ == "__main__":
                         walk_to(liyt[name_position])
                     step = "turn"
                     action = "find"
+                    step_action=1
                     speech2_turn_skip=0
                 if step_action == 1:
                     # walk in front of the guy
