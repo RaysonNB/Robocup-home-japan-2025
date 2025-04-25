@@ -770,6 +770,7 @@ if __name__ == "__main__":
         feature = "none"
         skip_cnt_vd=0
         nav1_skip_cnt=0
+        output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -1250,7 +1251,7 @@ if __name__ == "__main__":
                             box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                             fh, fw = abs(x1 - x2), abs(y1 - y2)
                             cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
-                            
+
                             if abs(e) <= 5:
                                 # speak("walk")
                                 action = "none"
@@ -1441,7 +1442,7 @@ if __name__ == "__main__":
                             box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                             fh, fw = abs(x1 - x2), abs(y1 - y2)
                             cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
-                            
+
                             if abs(e) <= 5:
                                 # speak("walk")
                                 action = "none"
@@ -1730,7 +1731,7 @@ if __name__ == "__main__":
                             box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                             fh, fw = abs(x1 - x2), abs(y1 - y2)
                             cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
-                            
+
                             if abs(e) <= 5:
                                 # speak("walk")
                                 action = "none"
