@@ -11,6 +11,7 @@ import math
 from open_manipulator_msgs.srv import SetJointPosition, SetJointPositionRequest
 from open_manipulator_msgs.srv import SetKinematicsPose, SetKinematicsPoseRequest
 import time
+import re
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 from rospkg import RosPack
@@ -588,12 +589,14 @@ locations = {
     "living room": [3.364, 2.991, 1.436],
     "hallway": [0.028, 3.514, 3.139]
 }
-#front 0 back 3.14 left 90 1.5 right 90 -1.5
-cout_location={
-    "living room": [1.153,3.338, 0],
-    "hallway": [1.153,3.338, 3.14],
+# front 0 back 3.14 left 90 1.5 right 90 -1.5
+cout_location = {
+    "living room": [1.153, 3.338, 0],
+    "hallway": [1.153, 3.338, 3.14],
     "dining room": [-1.581, -0.345, 0.15]
 }
+
+
 def walk_to1(name):
     if "none" not in name or "unknow" in name:
         speak("going to " + str(name))
@@ -609,6 +612,7 @@ def walk_to1(name):
                 break
         time.sleep(1)
         clear_costmaps
+
 
 if __name__ == "__main__":
     rospy.init_node("demo")
@@ -652,9 +656,9 @@ if __name__ == "__main__":
     # step 10 get the image response
     '''
     walk_to("starting point")
-    
+
     speak("please say start, then I will go to the host point")
-    
+
 
     while True:
         if "start" in s or "stop" in s:
@@ -717,7 +721,7 @@ if __name__ == "__main__":
         print(Q1)
         print(Q2)
         print(Q3)
-        Q3=Q3[0]
+        Q3 = Q3[0]
         speak(Q3[0])
         # say how the robot understand
         # speak(Q3[0])
@@ -740,8 +744,10 @@ if __name__ == "__main__":
         step_speak = 0
         age_cnt = 0
         failed_cnt = 0
-        final_speak_to_guest=""
-        feature="none"
+        final_speak_to_guest = ""
+        feature = "none"
+        skip_cnt_vd=0
+        nav1_skip_cnt=0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -789,7 +795,7 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     step_action = 100
-                    final_speak_to_guest=""
+                    final_speak_to_guest = ""
             # Manipulation2 just walk
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
                 if step_action == 0:
@@ -808,7 +814,7 @@ if __name__ == "__main__":
                     time.sleep(2)
                     speak("robot arm is in error")
                     step_action = 100
-                    final_speak_to_guest="here you are"
+                    final_speak_to_guest = "here you are"
             # Vision E 1,2
             elif ("vision (enumeration)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "enume" in command_type)) or (
@@ -898,9 +904,9 @@ if __name__ == "__main__":
                             break
                         time.sleep(2)
                     step_action = 100
-                    final_speak_to_guest=dictt["Voice"]
+                    final_speak_to_guest = dictt["Voice"]
                     gg = post_message_request("-1", "", "")
-            # vision D2  ***
+            # vision D2
             elif ("vision (descridption)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
@@ -911,13 +917,15 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     step_action = 1
+                    skip_cnt_vd=0
                 if step_action == 1:
                     if "height" in user_input or "tall" in user_input:
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         poses = net_pose.forward(code_image)
                         yu = 0
                         ay = 0
                         A = []
+                        skip_cnt_vd+=1
                         if len(poses) > 0:
                             YN = -1
                             a_num = 5
@@ -934,23 +942,27 @@ if __name__ == "__main__":
                                             yu += 1
                                 if yu >= 1:
                                     break
+                        if skip_cnt_vd>=51:
+                            step_action = 2
+                            speak("I can't see the guy I gonna go now")
                         if len(A) != 0 and yu >= 1:
                             cv2.circle(code_image, (A[0], A[1]), 3, (0, 255, 0), -1)
                             target_y = ay
                             print("your height is", (1000 - target_y + 330) / 10.0)
                             final_height = (1000 - target_y + 330) / 10.0
                             step_action = 2
-                            final_speak_to_guest="the guys height is "+str(final_height)
+                            final_speak_to_guest = "the guys height is " + str(final_height)
                     if "age" in user_input or "old" in user_input:
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
                         age_cnt += 1
+                        final_age=20
                         if not faceBoxes:
                             print("No face detected")
                             # continue
                         for faceBox in faceBoxes:
                             face = _frame2[max(0, faceBox[1] - padding):
-                                              min(faceBox[3] + padding, code_image.shape[0] - 1),
+                                           min(faceBox[3] + padding, code_image.shape[0] - 1),
                                    max(0, faceBox[0] - padding):
                                    min(faceBox[2] + padding, code_image.shape[1] - 1)]
                             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227),
@@ -965,9 +977,9 @@ if __name__ == "__main__":
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
                             if "face" not in age and "not" not in age or age_cnt >= 100:
                                 step_action = 2
-                                final_speak_to_guest="the guys is "+str(final_age)+" years old"
+                                final_speak_to_guest = "the guys is " + str(final_age) + " years old"
                     elif "color" in user_input or "shirt" in user_input:
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -975,6 +987,10 @@ if __name__ == "__main__":
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
+                        skip_cnt_vd+=1
+                        if skip_cnt_vd>=51:
+                            step_action = 2
+                            speak("I can't see the guy I gonna go now")
                         for i, detection in enumerate(detections):
                             # print(detection)
                             x1, y1, x2, y2, _, class_id = map(int, detection)
@@ -1021,7 +1037,7 @@ if __name__ == "__main__":
                                 if dictt["Steps"] == 12:
                                     break
                                 time.sleep(2)
-                            final_speak_to_guest=dictt["Voice"]
+                            final_speak_to_guest = dictt["Voice"]
                             gg = post_message_request("-1", "", "")
                             action1 = 1
                             step_action = 2
@@ -1046,6 +1062,10 @@ if __name__ == "__main__":
                             playsound("nigga2.mp3")
                             step_speak = 1
                         if step_speak == 1:
+                            skip_cnt_vd += 1
+                            if skip_cnt_vd >= 51:
+                                step_action = 2
+                                speak("I can't hear you I gonna go now")
                             if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
                             if "aaron" in s or "ellen" in s or "evan" in s: name_cnt = "aaron"
                             if "angel" in s: name_cnt = "angel"
@@ -1058,7 +1078,7 @@ if __name__ == "__main__":
                             if "olivia" in s: name_cnt = "olivia"
                             if name_cnt != "none":
                                 speak("hello " + name_cnt + " I gonna go now.")
-                                final_speak_to_guest="the guys name is " + name_cnt
+                                final_speak_to_guest = "the guys name is " + name_cnt
                                 step_action = 2
                 if step_action == 2:
                     step_action = 100
@@ -1075,6 +1095,7 @@ if __name__ == "__main__":
                     step_action = 1
                     step = "turn"
                     action = "find"
+                    nav1_skip_cnt=0
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
@@ -1084,6 +1105,12 @@ if __name__ == "__main__":
                         feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
+                        nav1_skip_cnt+=1
+                        if nav1_skip_cnt>=30:
+                            step = "none"
+                            action = "none"
+                            step_action = 3
+                            speak("I can't find you I gonna go back to the host")
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
@@ -1118,7 +1145,7 @@ if __name__ == "__main__":
                         gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1198,7 +1225,7 @@ if __name__ == "__main__":
                 if step_action == 2:
 
                     msg = Twist()
-                    code_image=_frame2.copy()
+                    code_image = _frame2.copy()
                     poses = net_pose.forward(code_image)
                     min_d = 9999
                     t_idx = -1
@@ -1236,7 +1263,7 @@ if __name__ == "__main__":
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
-            # Navigation2 ***
+            # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
@@ -1248,6 +1275,7 @@ if __name__ == "__main__":
                     step_action = 1
                     step = "turn"
                     action = "find"
+                    nav2_skip_cnt=0
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
@@ -1257,6 +1285,12 @@ if __name__ == "__main__":
                         feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
+                        nav2_skip_cnt =0
+                        if nav2_skip_cnt>=30:
+                            step = "none"
+                            action = "none"
+                            step_action = 3
+                            speak("I can't find you I gonna go back to the host")
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
@@ -1291,7 +1325,7 @@ if __name__ == "__main__":
                         gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1366,7 +1400,7 @@ if __name__ == "__main__":
                         walk_to(liyt[name_position])
                     speak("dear guest here is " + liyt[name_position] + " and I will go back now")
                     step_action = 100
-            # Speech1 ***
+            # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
@@ -1425,7 +1459,29 @@ if __name__ == "__main__":
                         elif "month" in s:
                             answer = f"It is {day_of_month}"
                         elif "plus" in s or "half":
-                            answer = "It is 1.5"
+                            number_words = {
+                                "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+                                "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+                                "ten": "10", "eleven": "11", "twelve": "12", "thirteen": "13",
+                                "fourteen": "14", "fifteen": "15", "sixteen": "16", "seventeen": "17",
+                                "eighteen": "18", "nineteen": "19", "twenty": "20"
+                            }
+                            for word, digit in number_words.items():
+                                s = s.replace(word, digit)
+                            numbers = list(map(int, re.findall(r'\d+', s)))
+                            operation = re.search(r'(plus|minus|times|divided by)', s).group(1)
+                            result = "Unknown talk list I can't answer it"
+                            if operation and len(numbers) >= 2:
+                                a, b = numbers[0], numbers[1]
+                                if operation == 'plus':
+                                    result = a + b
+                                elif operation == 'minus':
+                                    result = a - b
+                                elif operation == 'times':
+                                    result = a * b
+                                elif operation == 'divided by':
+                                    result = a / b
+                            speak(result)
                         elif "back" in s or "bird" in s:
                             answer = "It is the hummingbird"
                         elif "mammal" in s or "fly" in s:
@@ -1487,7 +1543,7 @@ if __name__ == "__main__":
                     post_message_request("-1", "", "")'''
                     speak("I will go back now bye bye")
                     step_action = 100
-            # Speech2 ***
+            # Speech2
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
                 liyt = Q2.json
                 if step_action == 0:
@@ -1498,6 +1554,7 @@ if __name__ == "__main__":
                         walk_to(liyt[name_position])
                     step = "turn"
                     action = "find"
+                    speech2_turn_skip=0
                 if step_action == 1:
                     # walk in front of the guy
                     name_position = "$POSE/GESTURE"
@@ -1507,6 +1564,13 @@ if __name__ == "__main__":
                         feature = liyt[name_position]
                     if step == "turn":
                         move(0, -0.2)
+                        speech2_turn_skip+=1
+                        if speech2_turn_skip>=30:
+                            speech2_turn_skip=0
+                            step = "none"
+                            action = "none"
+                            speak("I can't find you I gonna go back to the host")
+                            step_action = 2
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
@@ -1540,7 +1604,7 @@ if __name__ == "__main__":
                             step = "turn"
                         gg = post_message_request("-1", feature, who_help)
                     if action == "find":
-                        code_image=_frame2.copy()
+                        code_image = _frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1604,29 +1668,58 @@ if __name__ == "__main__":
                     if action == "speak":
                         action = 1
                         step = "none"
-                        action="none"
+                        action = "none"
                         step_action = 2
                 if step_action == 2:
+                    now = datetime.now()
                     name_position = "$TELL_LIST"
                     if "$TELL_LIST" not in liyt:
                         name_position = "TELL_LIST"
+                    current_time = now.strftime("%H:%M:%S")
                     question = "My question is " + liyt[name_position]
-                    post_message_request("talk_list", "", question)
-                    while True:
-                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
-                        response_data = r.text
-                        dictt = json.loads(response_data)
-                        if dictt["Steps"] == "answer2":
-                            break
-                        time.sleep(2)
-                    post_message_request("-1", "", question)
-                    speak(dictt["answer"])
+                    speak("dear guest")
+                    time.sleep(1)
+                    if "something about yourself" in command_type or ("something" in command_type and "yourself" in command_type):
+                        speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
+                    elif "what day today is" in command_type or ("today" in command_type and "day" in command_type):
+                        speak("today is 25 th April in 2025")
+                    elif "what day tomorrow is" in command_type or ("tomorrow" in command_type and "say" in command_type):
+                        speak("today is 26 th April in 2025")
+                    elif "where robocup is held this year" in command_type or ("where" in command_type and "robocup" in command_type and "year" in command_type):
+                        speak("the robocup 2025 is held in Brazil,Salvador")
+                    elif "your team's name" in command_type or ("name" in command_type and "team" in command_type):
+                        speak("my team name is Fambot")
+                    elif "where you come from" in command_type or ("where" in command_type and "come" in command_type and "from" in command_type):
+                        speak("We are Fambot from Macau Puiching Middle School")
+                    elif "what the weather is like today" in command_type or ("weather" in command_type and "today" in command_type and "what" in command_type):
+                        speak("today weather is Raining")
+                    elif "what the time is" in command_type or ("what" in command_type and "time" in command_type):
+                        speak("the current time is" + current_time)
+                    else:
+                        numbers = list(map(int, re.findall(r'\d+', command_type)))
+                        operation = re.search(r'(plus|minus|times|divided by)', command_type).group(1)
+                        result = "Unknown talk list I can't answer it"
+                        if operation and len(numbers)>=2:
+                            a, b = numbers[0], numbers[1]
+                            if operation == 'plus':
+                                result = a + b
+                            elif operation == 'minus':
+                                result = a - b
+                            elif operation == 'times':
+                                result = a * b
+                            elif operation == 'divided by':
+                                result = a / b
+                        speak(result)
+                    step_action = 3
+                if step_action == 3:
                     time.sleep(1)
                     speak("I will go back now bye bye")
                     step_action = 100
             else:
-                speak("I can't do it")
+                speak("I can't do it take the next command please")
                 break
         walk_to("host")
         speak(final_speak_to_guest)
         time.sleep(2)
+    walk_to("exit")
+    speak("end")
