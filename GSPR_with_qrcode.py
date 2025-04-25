@@ -401,7 +401,7 @@ clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
 
 
 def walk_to(name):
-    if "none" not in name:
+    if "none" not in name or "unknow" in name:
         speak("going to " + str(name))
         name = name.lower()
         real_name = check_item(name)
@@ -590,12 +590,12 @@ locations = {
 }
 #front 0 back 3.14 left 90 1.5 right 90 -1.5
 cout_location={
-    "dining room": [1.153,3.338, 0],
+    "living room": [1.153,3.338, 0],
     "hallway": [1.153,3.338, 3.14],
-    "living room": [-1.581, -0.345, 0]
+    "dining room": [-1.581, -0.345, 0.15]
 }
 def walk_to1(name):
-    if "none" not in name:
+    if "none" not in name or "unknow" in name:
         speak("going to " + str(name))
         name = name.lower()
         real_name = check_item(name)
@@ -639,33 +639,37 @@ if __name__ == "__main__":
     step_action = 0
     faceNet = cv2.dnn.readNet(faceModel, faceProto)
     ageNet = cv2.dnn.readNet(ageModel, ageProto)
-
+    print("yolov8")
+    Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
+    dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
+    s = ""
+    rospy.Subscriber("/voice/text", Voice, callback_voice)
     # step_action
     # add action for all code
     # Step 0 first send
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
+    '''
     walk_to("starting point")
-    s = ""
-    rospy.Subscriber("/voice/text", Voice, callback_voice)
-    # speak("please say start, then I will go to the host point")
-    print("yolov8")
-    Kinda = np.loadtxt(RosPack().get_path("mr_dnn") + "/Kinda.csv")
-    dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
+    
+    speak("please say start, then I will go to the host point")
+    
 
     while True:
         if "start" in s or "stop" in s:
             break
+    '''
     step = "none"
     confirm_command = 0
     walk_to("host")
-    for i in range(3):
+    for i in range(10):
 
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = input("command: ")
+        '''
         while True:
             print("step1")
             if _frame2 is None: continue
@@ -680,7 +684,7 @@ if __name__ == "__main__":
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        cv2.destroyAllWindows()
+        cv2.destroyAllWindows()'''
 
         # confirm
         if confirm_command == 0:
@@ -713,11 +717,8 @@ if __name__ == "__main__":
         print(Q1)
         print(Q2)
         print(Q3)
-        Q3=Q3.replace("the robot","I ")
-        Q3 = Q3.replace("the Robot", "I ")
-        Q3 = Q3.replace("The Robot", "I ")
-        Q3 = Q3.replace("The robot", "I ")
-        speak(Q3)
+        Q3=Q3[0]
+        speak(Q3[0])
         # say how the robot understand
         # speak(Q3[0])
         # divide
@@ -769,13 +770,15 @@ if __name__ == "__main__":
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     time.sleep(2)
                     speak("robot arm is in error")
                     step_action = 2
@@ -783,7 +786,8 @@ if __name__ == "__main__":
                     name_position = "$PLACE2"
                     if "$PLACE2" not in liyt:
                         name_position = "PLACE2"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 100
                     final_speak_to_guest=""
             # Manipulation2 just walk
@@ -792,13 +796,15 @@ if __name__ == "__main__":
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
                         name_position = "ROOM1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                 if step_action == 1:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
-                    walk_to(liyt[name_position])
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     time.sleep(2)
                     speak("robot arm is in error")
                     step_action = 100
@@ -907,6 +913,7 @@ if __name__ == "__main__":
                     step_action = 1
                 if step_action == 1:
                     if "height" in user_input or "tall" in user_input:
+                        code_image=_frame2.copy()
                         poses = net_pose.forward(code_image)
                         yu = 0
                         ay = 0
@@ -935,13 +942,14 @@ if __name__ == "__main__":
                             step_action = 2
                             final_speak_to_guest="the guys height is "+str(final_height)
                     if "age" in user_input or "old" in user_input:
+                        code_image=_frame2.copy()
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
                         age_cnt += 1
                         if not faceBoxes:
                             print("No face detected")
                             # continue
                         for faceBox in faceBoxes:
-                            face = code_image[max(0, faceBox[1] - padding):
+                            face = _frame2[max(0, faceBox[1] - padding):
                                               min(faceBox[3] + padding, code_image.shape[0] - 1),
                                    max(0, faceBox[0] - padding):
                                    min(faceBox[2] + padding, code_image.shape[1] - 1)]
@@ -959,6 +967,7 @@ if __name__ == "__main__":
                                 step_action = 2
                                 final_speak_to_guest="the guys is "+str(final_age)+" years old"
                     elif "color" in user_input or "shirt" in user_input:
+                        code_image=_frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1109,6 +1118,7 @@ if __name__ == "__main__":
                         gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
+                        code_image=_frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1188,7 +1198,7 @@ if __name__ == "__main__":
                 if step_action == 2:
 
                     msg = Twist()
-
+                    code_image=_frame2.copy()
                     poses = net_pose.forward(code_image)
                     min_d = 9999
                     t_idx = -1
@@ -1281,6 +1291,7 @@ if __name__ == "__main__":
                         gg = post_message_request("-1", feature, who_help)
 
                     if action == "find":
+                        code_image=_frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
@@ -1529,6 +1540,7 @@ if __name__ == "__main__":
                             step = "turn"
                         gg = post_message_request("-1", feature, who_help)
                     if action == "find":
+                        code_image=_frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
