@@ -667,12 +667,22 @@ if __name__ == "__main__":
     step = "none"
     confirm_command = 0
     walk_to("host")
-    for i in range(10):
+    command_list=["Tell me what is the largest object on the chair B",
+                  "Tell me how many kitchen items there are on the chair B",
+                  "Tell me how many people in the dining room are wearing black sweaters",
+                  "Tell me the name of the person at the chair B",
+                  "Get a lunch box from the chair A and put it on the long table A",
+                  "Give me a coffee from the long table A",
+                  "Say hello to the person wearing a black blouse in the hallway and say where RoboCup is held this year",
+                  "Go to the hallway then meet Angel and answer a quiz",
+                  "Find a sitting person in the hallway and take them to the tray B",
+                  "Find a standing person in the dining room and follow them to the hallway"]
+    for i in range(0,10):
 
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
-        data = input("command: ")
+        data = command_list[i]
         '''
         while True:
             print("step1")
@@ -1053,7 +1063,7 @@ if __name__ == "__main__":
                         # hunter
                         # olivia
                         if step_speak == 0:
-                            speak("hello nigga can u speak your name to me")
+                            speak("hello guest can u speak your name to me")
                             speak("speak it in complete sentence, for example, my name is fambot")
                             speak("speak after the")
                             playsound("nigga2.mp3")
@@ -1136,7 +1146,7 @@ if __name__ == "__main__":
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
                         if "yes" in aaa or "ys" in aaa:
-                            speak("found you the guying rising hand")
+                            speak("found you the guest rising hand")
                             action = "front"
                             step = "none"
                         else:
@@ -1211,7 +1221,7 @@ if __name__ == "__main__":
                         speak("hi nigga can u stand behind me and I will follow u now")
                         speak("please say robot stop when you arrived and I will go back")
                         time.sleep(4)
-                        speak("dear guest please walk")
+                        speak("hello dear guest please walk")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1219,9 +1229,10 @@ if __name__ == "__main__":
                 if action == 1:
                     s = s.lower()
                     print("listening", s)
-                    if "thank" in s or "you" in s or "stop" in s:
+                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s:
                         action = 0
                         step_action = 3
+
                 if step_action == 2:
 
                     msg = Twist()
@@ -1709,7 +1720,7 @@ if __name__ == "__main__":
                                 result = a * b
                             elif operation == 'divided by':
                                 result = a / b
-                        speak(result)
+                        speak("hello dear guest"+str(result))
                     step_action = 3
                 if step_action == 3:
                     time.sleep(1)
