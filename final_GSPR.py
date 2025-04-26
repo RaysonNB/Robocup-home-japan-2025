@@ -247,7 +247,7 @@ def post_message_request(step, s1, question):
                "Voice": s1,
                "Questionasking": question,
                "answer": "None"}
-    response = requests.post(api_url, json=my_todo, timeout=2.5)
+    response = requests.post(api_url, json=my_todo, timeout=3)
     result = response.json()
     return result
 
@@ -1178,7 +1178,7 @@ if __name__ == "__main__":
                     if step == "turn":
                         move(0, -0.2)
                         nav1_skip_cnt+=1
-                        if nav1_skip_cnt>=30:
+                        if nav1_skip_cnt>=500:
                             step = "none"
                             action = "none"
                             step_action = 3
@@ -1223,7 +1223,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request("-1", feature, who_help)
+                        gg = post_message_request("-1", "", "")
 
                     if action == "find":
                         code_image = _frame2.copy()
@@ -1370,7 +1370,7 @@ if __name__ == "__main__":
                     if step == "turn":
                         move(0, -0.2)
                         nav2_skip_cnt =0
-                        if nav2_skip_cnt>=30:
+                        if nav2_skip_cnt>=500:
                             step = "none"
                             action = "none"
                             step_action = 3
@@ -1415,7 +1415,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request("-1", feature, who_help)
+                        gg = post_message_request("-1", "", "")
 
                     if action == "find":
                         code_image = _frame2.copy()
@@ -1615,7 +1615,7 @@ if __name__ == "__main__":
                     if failed_cnt > 5:
                         speak("I can't get your question, I gonna go back now")
                         step_action = 4
-                    if answer == "none" and none_cnt >= 30 and s != pre_s:
+                    if answer == "none" and none_cnt >= 1200 and s != pre_s:
                         speak("can u please speak it again")
                         none_cnt = 0
                         failed_cnt += 1
@@ -1662,7 +1662,7 @@ if __name__ == "__main__":
                     if step == "turn":
                         move(0, -0.2)
                         speech2_turn_skip+=1
-                        if speech2_turn_skip>=30:
+                        if speech2_turn_skip>=500:
                             speech2_turn_skip=0
                             step = "none"
                             action = "none"
@@ -1708,7 +1708,7 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                        gg = post_message_request("-1", feature, who_help)
+                        gg = post_message_request("-1", "", "")
                     if action == "find":
                         code_image = _frame2.copy()
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -1786,25 +1786,28 @@ if __name__ == "__main__":
                     question = "My question is " + liyt[name_position]
                     speak("dear guest")
                     time.sleep(1)
-                    if "something about yourself" in command_type or ("something" in command_type and "yourself" in command_type):
+                    user_input=user_input.lower()
+                    if "something about yourself" in user_input or ("something" in user_input and "yourself" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
-                    elif "what day today is" in command_type or ("today" in command_type and "day" in command_type):
+                    elif "what day today is" in user_input or ("today" in user_input and "day" in user_input):
                         speak("today is 25 th April in 2025")
-                    elif "what day tomorrow is" in command_type or ("tomorrow" in command_type and "say" in command_type):
+                    elif "what day tomorrow is" in user_input or ("tomorrow" in user_input and "say" in user_input):
                         speak("today is 26 th April in 2025")
-                    elif "where robocup is held this year" in command_type or ("where" in command_type and "robocup" in command_type and "year" in command_type):
+                    elif "where robocup is held this year" in user_input or ("where" in user_input and "robocup" in user_input and "year" in user_input):
                         speak("the robocup 2025 is held in Brazil,Salvador")
-                    elif "your team's name" in command_type or ("name" in command_type and "team" in command_type):
+                    elif "your team's name" in user_input or ("name" in user_input and "team" in user_input):
                         speak("my team name is Fambot")
-                    elif "where you come from" in command_type or ("where" in command_type and "come" in command_type and "from" in command_type):
+                    elif "where you come from" in user_input or ("where" in user_input and "come" in user_input and "from" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School")
-                    elif "what the weather is like today" in command_type or ("weather" in command_type and "today" in command_type and "what" in command_type):
+                    elif "what the weather is like today" in user_input or ("weather" in user_input and "today" in user_input and "what" in user_input):
                         speak("today weather is Raining")
-                    elif "what the time is" in command_type or ("what" in command_type and "time" in command_type):
+                    elif "what the time is" in user_input or ("what" in user_input and "time" in user_input):
                         speak("the current time is" + current_time)
                     else:
-                        numbers = list(map(int, re.findall(r'\d+', command_type)))
-                        operation = re.search(r'(plus|minus|times|divided by)', command_type).group(1)
+                        numbers = list(map(int, re.findall(r'\d+', user_input)))
+                        operation = re.search(r'(plus|minus|times|divided by)', user_input)
+                        if operation is not None:
+                            operation=operation.group(1)
                         result = "Unknown talk list I can't answer it"
                         if operation and len(numbers)>=2:
                             a, b = numbers[0], numbers[1]
