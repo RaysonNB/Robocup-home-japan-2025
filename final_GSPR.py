@@ -106,6 +106,7 @@ def speak(g):
     os.system(f'espeak "{g}"')
     # rospy.loginfo(g)
     print(g)
+    time.sleep(0.3)
 
 
 class FollowMe(object):
@@ -247,7 +248,7 @@ def post_message_request(step, s1, question):
                "Voice": s1,
                "Questionasking": question,
                "answer": "None"}
-    response = requests.post(api_url, json=my_todo, timeout=3)
+    response = requests.post(api_url, json=my_todo, timeout=2.5)
     result = response.json()
     return result
 
@@ -680,11 +681,10 @@ if __name__ == "__main__":
     step = "none"
     confirm_command = 0
     walk_to("host")
-    command_list=[
-                  "Say hello to the person wearing a white clothes in the hallway and say where RoboCup is held this year",
+    command_list=["Find a standing person in the dining room and follow them to the hallway",
+                  "Say hello to the person wearing a yellow clothes in the hallway and say where RoboCup is held this year",
                   "Go to the hallway then meet Angel and answer a quiz",
                   "Find a sitting person in the hallway and take them to the tray B",
-                  "Find a standing person in the dining room and follow them to the hallway",
                   "Tell me what is the largest object on the chair B",
                   "Tell me how many kitchen items there are on the chair B",
                   "Tell me how many people in the dining room are wearing black sweaters",
@@ -753,7 +753,7 @@ if __name__ == "__main__":
         Q3=Q3.replace("']","")
         
         Q3="I should "+Q3
-        Q3=Q3.replace("me","you")
+        Q3=Q3.replace(" me"," you")
         speak(Q3)
         
         # say how the robot understand
@@ -1217,12 +1217,15 @@ if __name__ == "__main__":
                         except PermissionError:
                             print("File renamed failed")
                         if "yes" in aaa or "ys" in aaa:
-                            speak("found you the guest rising hand")
+                            speak("found you the guest " +feature)
                             action = "front"
                             step = "none"
                         else:
                             action = "find"
                             step = "turn"
+                            for i in range(55):
+                                move(0,-0.2)
+                                time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
 
                     if action == "find":
@@ -1291,11 +1294,14 @@ if __name__ == "__main__":
                             move(0.2, 0)
                     if action == "speak":
                         speak("hello dear guest can u stand behind me and I will follow u now")
-                        time.sleep(7)
+                        time.sleep(2)
+                        for i in range(78):
+                            move(0,-0.35)
+                            time.sleep(0.125)
                         speak("dear guest please say robot you can stop")
-                        time.sleep(0.5)
+                        #time.sleep(0.5)
                         speak("when you arrived and I will go back")
-                        time.sleep(0.5)
+                        #time.sleep(0.5)
                         speak("hello dear guest please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
@@ -1307,6 +1313,7 @@ if __name__ == "__main__":
                     if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s:
                         action = 0
                         step_action = 3
+                        say("I will go back now bye bye")
                 if step_action == 2:
                     msg = Twist()
                     code_image = _frame2.copy()
@@ -1409,12 +1416,15 @@ if __name__ == "__main__":
                         except PermissionError:
                             print("File renamed failed")
                         if "yes" in aaa or "ys" in aaa:
-                            speak("found you the guying rising hand")
+                            speak("found you the guying "+feature)
                             action = "front"
                             step = "none"
                         else:
                             action = "find"
                             step = "turn"
+                            for i in range(55):
+                                move(0,-0.2)
+                                time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
 
                     if action == "find":
@@ -1523,9 +1533,9 @@ if __name__ == "__main__":
                     speak("dear guest please speak your question in complete sentence after the")
                     playsound("nigga2.mp3")
                     speak("sound")
-                    time.sleep(0.5)
+                    #time.sleep(0.5)
                     speak("for example hi robot what day is it today")
-                    time.sleep(0.5)
+                    #time.sleep(0.5)
                     playsound("nigga2.mp3")
                     step_action = 3
                 if step_action == 3:
@@ -1708,6 +1718,9 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
+                            for i in range(55):
+                                move(0,-0.2)
+                                time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
                     if action == "find":
                         code_image = _frame2.copy()
