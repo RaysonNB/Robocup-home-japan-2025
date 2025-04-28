@@ -52,7 +52,7 @@ while True:
         
         
         (Questions)
-        Question1: which Task is it(just one) [Manipulation1,Manipulation2,Vision (Enumeration)1,V$ROOMision (Enumeration)2,Vision (Description)1,Vision (Description)2,Navigation1,Navigation2,Speech1,Speech2] ?
+        Question1: which Task is it(just one) [Manipulation1,Manipulation2,Vision (Enumeration)1,Vision (Enumeration)2,Vision (Description)1,Vision (Description)2,Navigation1,Navigation2,Speech1,Speech2] ?
         Question2: give me the $informations(make it in dictionary), for example {"$ROOM1":"Living room","$PLACE1":"Tray A"} ?
         Question3: what the sentence mean, and what I should do(20words)(just give me one sentence)?
         
