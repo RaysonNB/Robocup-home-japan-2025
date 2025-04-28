@@ -578,39 +578,48 @@ def highlightFace(net, frame, conf_threshold=0.7):
 
 locations = {
     # Furniture and objects
-    "wall long": [0, 0, 0],
-    "wall short": [0, 0, 0],
-    "long table a": [3.154, 2.870, 1.53],
-    "long table b": [3.350, 3.111, -1.5],
-    "tall table": [2.507, 3.287, -1.607],
-    "shelf": [-0.715, -0.193, 1.569],
-    "chair a": [-0.261, -0.067, 0],
-    "chair b": [-0.265, 0.633, 0],
-    "tray a": [2.490, 3.353, 1.53],
-    "tray b": [3.238, 3.351, 1.53],
-    "container": [3.829, 3.092, 1.55],
-    "pen holder": [3.031, 3.436, 1.53],
-    "trash bin a": [-1.182, 3.298, 3.12],
-    "trash bin b": [5.080, 3.032, 1.54],
-    "storage box a": [-1.058, 4.001, 3.11],
-    "storage box b": [5.661, 3.102, 1.54],
+    "counter": [3.154, 2.870, 1.53],
+    "left tray": [3.350, 3.111, -1.5],
+    "right tray": [2.507, 3.287, -1.607],
+    "pen holder": [3.154, 2.870, 1.53],
+    "container": [3.350, 3.111, -1.5],
+    "left kachaka shelf": [2.507, 3.287, -1.607],
+    "right kachaka shelf": [-0.715, -0.193, 1.569],
+    "low table": [-1.182, 3.298, 3.12],
+    "left chair": [-0.261, -0.067, 0],
+    "right chair": [-0.265, 0.633, 0],
+    "trash bin": [2.490, 3.353, 1.53],
+    "tall table": [3.238, 3.351, 1.53],
+    "left kachaka station": [3.829, 3.092, 1.55],
+    "right kachaka station": [3.031, 3.436, 1.53],
+    "shelf": [-1.182, 3.298, 3.12],
+    #bed
+    "bed": [5.080, 3.032, 1.54],
+    #dining room
+    "dining table": [-1.058, 4.001, 3.11],
+    "couch": [5.661, 3.102, 1.54],
 
     # Locations and special points
-    "starting point": [3.809, 2.981, 3.053],
+    "entrance": [3.809, 2.981, 3.053],
     "exit": [6.796, 3.083, 0],
     "host": [-0.967, -0.013, -1.709],
     "dining room": [-0.397, 0.297, 0],
     "living room": [3.364, 2.991, 1.436],
-    "hallway": [0.028, 3.514, 3.139]
+    "bedroom": [0.028, 3.514, 3.139],
+    "study room": [-0.397, 0.297, 0]
 }
 # front 0 back 3.14 left 90 1.5 right 90 -1.5
 cout_location = {
     "living room": [1.153, 3.338, 0],
-    "hallway": [1.153, 3.338, 3.14],
-    "dining room": [-1.581, -0.345, 0.15]
+    "bedroom": [1.153, 3.338, 3.14],
+    "dining room": [-1.581, -0.345, 0.15],
+    "study room": [-1.581, -0.345, 0.15]
 }
 
-
+dining_room_dif={
+    "din1":[-1.581, -0.345,1.57],
+    "din2":[0,0 ,-1.57] ##
+}
 # name
 # qestion list
 # answer
