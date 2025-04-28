@@ -712,7 +712,6 @@ if __name__ == "__main__":
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = command_list[i]
-        '''
         while True:
             print("step1")
             if _frame2 is None: continue
@@ -727,8 +726,8 @@ if __name__ == "__main__":
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        cv2.destroyAllWindows()'''
-
+        cv2.destroyAllWindows()
+        data = command_list[i]
         # confirm
         if confirm_command == 0:
             speak("dear host your command is")
