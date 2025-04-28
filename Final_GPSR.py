@@ -610,9 +610,10 @@ cout_location = {
     "dining room": [-1.581, -0.345, 0.15]
 }
 
-#name
-#qestion list
-#answer
+
+# name
+# qestion list
+# answer
 def walk_to1(name):
     if "none" not in name or "unknow" in name:
         speak("going to " + str(name))
@@ -770,7 +771,7 @@ if __name__ == "__main__":
 
         Q3 = "I should " + Q3
         Q3 = Q3.replace(" me", " you")
-        print("My understanding for command",i)
+        print("My understanding for command", i)
         print("************************")
         speak(Q3)
         print("************************")
@@ -801,27 +802,28 @@ if __name__ == "__main__":
         nav1_skip_cnt = 0
         output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
         uuu = data.lower()
-        real_name="guest"
+        real_name = "guest"
         if "chikako" in uuu:
-            real_name="chikako"
+            real_name = "chikako"
         elif "yoshimura" in uuu:
-            real_name="yoshimura"
+            real_name = "yoshimura"
         elif "basil" in uuu:
-            real_name="basil"
+            real_name = "basil"
         elif "angel" in uuu:
-            real_name="angel"
+            real_name = "angel"
         elif "jack" in uuu:
-            real_name="jack"
+            real_name = "jack"
         elif "andrew" in uuu:
-            real_name="andrew"
+            real_name = "andrew"
         elif "sophia" in uuu:
-            real_name="sophia"
+            real_name = "sophia"
         elif "mike" in uuu:
-            real_name="mike"
+            real_name = "mike"
         elif "leo" in uuu:
-            real_name="leo"
+            real_name = "leo"
         elif "tom" in uuu:
-            real_name="tom"
+            real_name = "tom"
+        v2_turn_skip=0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -890,7 +892,7 @@ if __name__ == "__main__":
                     time.sleep(2)
                     speak("robot arm is in error")
                     step_action = 2
-                if step_action==2:
+                if step_action == 2:
                     if " me " in user_input:
                         walk_to("host")
                     else:
@@ -957,13 +959,13 @@ if __name__ == "__main__":
                     step_action = 100
                     final_speak_to_guest = dictt["Voice"]
                     gg = post_message_request("-1", "", "")
-                    current_file_name = output_dir + "GSPR" + str(current_time) +"_command_"+str(i)+".jpg"
+                    current_file_name = output_dir + "GSPR" + str(current_time) + "_command_" + str(i) + ".jpg"
                     new_file_name = output_dir + "GSPR.jpg"
                     try:
                         os.rename(new_file_name, current_file_name)
-                        #print("File renamed successfully.")
+                        # print("File renamed successfully.")
                         print("************")
-                        print("command",i,"File name:", current_file_name)
+                        print("command", i, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
@@ -1011,12 +1013,12 @@ if __name__ == "__main__":
                     step_action = 100
                     final_speak_to_guest = dictt["Voice"]
                     gg = post_message_request("-1", "", "")
-                    current_file_name = output_dir + "GSPR" + str(current_time) +"_command_"+str(i)+".jpg"
+                    current_file_name = output_dir + "GSPR" + str(current_time) + "_command_" + str(i) + ".jpg"
                     new_file_name = output_dir + "GSPR.jpg"
                     try:
                         os.rename(new_file_name, current_file_name)
                         print("************")
-                        print("command",i,"File name:", current_file_name)
+                        print("command", i, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
@@ -1032,8 +1034,70 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
-                    step_action = 1
+                    step_action = 3
                     skip_cnt_vd = 0
+                if step_action == 3:
+                    action = "turn"
+                    step = "action"
+                if step == "turn":
+                    move(0, -0.2)
+                    v2_turn_skip += 1
+                    if v2_turn_skip >= 500:
+                        v2_turn_skip = 0
+                        step = "none"
+                        action = "none"
+                        step_action = 1
+                        speak("I can't find you I gonna go back to the host")
+                        step_action = 2
+                if action == "find":
+                    code_image = _frame2.copy()
+                    detections = dnn_yolo1.forward(code_image)[0]["det"]
+                    # clothes_yolo
+                    # nearest people
+                    nx = 2000
+                    cx_n, cy_n = 0, 0
+                    CX_ER = 99999
+                    need_position = 0
+                    for i, detection in enumerate(detections):
+                        # print(detection)
+                        x1, y1, x2, y2, _, class_id = map(int, detection)
+                        score = detection[4]
+                        cx = (x2 - x1) // 2 + x1
+                        cy = (y2 - y1) // 2 + y1
+                        # depth=find_depsth
+                        _, _, d = get_real_xyz(code_depth, cx, cy, 2)
+                        # cv2.rectangle(up_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                        if score > 0.65 and class_id == 0 and d <= nx and d != 0 and (320 - cx) < CX_ER:
+                            need_position = [x1, y1, x2, y2, cx, cy]
+                            # ask gemini
+                            cv2.rectangle(code_image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                            cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
+                            print("people distance", d)
+                            CX_ER = 320 - cx
+                    if need_position != 0:
+                        h, w, c = code_image.shape
+                        x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
+                        e = w // 2 - cx2
+                        v = 0.001 * e
+                        if v > 0:
+                            v = min(v, 0.3)
+                        if v < 0:
+                            v = max(v, -0.3)
+                        move(0, v)
+                        print(e)
+                        output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                        face_box = [x1, y1, x2, y2]
+                        box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                        fh, fw = abs(x1 - x2), abs(y1 - y2)
+                        cv2.imwrite(output_dir + "GSPR_people.jpg", box_roi)
+                        if abs(e) <= 10:
+                            # speak("walk")
+                            action = "none"
+                            step = "none"
+                            print("turned")
+                            move(0, 0)
+                            step_action = 1
                 if step_action == 1:
                     if "height" in user_input or "tall" in user_input:
                         code_image = _frame2.copy()
@@ -1067,7 +1131,7 @@ if __name__ == "__main__":
                             print("your height is", (1000 - target_y + 330) / 10.0)
                             final_height = (1000 - target_y + 330) / 10.0
                             step_action = 2
-                            final_speak_to_guest = "the guys height is " + str(final_height)+" cm"
+                            final_speak_to_guest = "the guys height is " + str(final_height) + " cm"
                     if "age" in user_input or "old" in user_input:
                         code_image = _frame2.copy()
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
@@ -1155,12 +1219,13 @@ if __name__ == "__main__":
                                 time.sleep(2)
                             final_speak_to_guest = dictt["Voice"]
                             gg = post_message_request("-1", "", "")
-                            current_file_name = output_dir + "GSPR_color" + str(current_time) +"_command_"+str(i)+".jpg"
+                            current_file_name = output_dir + "GSPR_color" + str(current_time) + "_command_" + str(
+                                i) + ".jpg"
                             new_file_name = output_dir + "GSPR_color.jpg"
                             try:
                                 os.rename(new_file_name, current_file_name)
                                 print("************")
-                                print("command",i,"File name:", current_file_name)
+                                print("command", i, "File name:", current_file_name)
                                 print("************")
                             except FileNotFoundError:
                                 print("File renamed failed")
@@ -1180,7 +1245,7 @@ if __name__ == "__main__":
                         # hunter
                         # olivia
                         if step_speak == 0:
-                            #speak("hello")
+                            # speak("hello")
                             speak("hello guest can u speak your name to me")
                             speak("speak it in complete sentence, for example, my name is fambot")
                             speak("speak after the")
@@ -1267,19 +1332,20 @@ if __name__ == "__main__":
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
-                        current_file_name = output_dir + "GSPR_people" + str(current_time) +"_command_"+str(i)+".jpg"
+                        current_file_name = output_dir + "GSPR_people" + str(current_time) + "_command_" + str(
+                            i) + ".jpg"
                         new_file_name = output_dir + "GSPR_people.jpg"
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command",i,"File name:", current_file_name)
+                            print("command", i, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
                         if "yes" in aaa or "ys" in aaa:
-                            
+
                             speak("found you the guest " + feature)
                             action = "front"
                             step = "none"
@@ -1363,7 +1429,7 @@ if __name__ == "__main__":
                         for i in range(78):
                             move(0, -0.35)
                             time.sleep(0.125)
-                        if real_name=="guest":
+                        if real_name == "guest":
                             speak("dear guest please say robot you can stop")
                         else:
                             speak(real_name)
@@ -1371,8 +1437,9 @@ if __name__ == "__main__":
                         # time.sleep(0.5)
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
-                        speak("hello dear "+real_name)
-                        speak("please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak("hello dear " + real_name)
+                        speak(
+                            "please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1476,12 +1543,13 @@ if __name__ == "__main__":
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
-                        current_file_name = output_dir + "GSPR_people" + str(current_time) +"_command_"+str(i)+".jpg"
+                        current_file_name = output_dir + "GSPR_people" + str(current_time) + "_command_" + str(
+                            i) + ".jpg"
                         new_file_name = output_dir + "GSPR_people.jpg"
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command",i,"File name:", current_file_name)
+                            print("command", i, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
@@ -1564,7 +1632,7 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        speak("hello dear "+real_name)
+                        speak("hello dear " + real_name)
                         speak("can u stand in front of me and I will guild u now")
                         action = 1
                         step = "none"
@@ -1575,7 +1643,7 @@ if __name__ == "__main__":
                         name_position = "ROOM2"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
-                    if real_name=="guest":
+                    if real_name == "guest":
                         speak("dear guest ")
                     else:
                         speak(real_name)
@@ -1599,7 +1667,7 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     if action == "speak":
-                        if real_name=="guest":
+                        if real_name == "guest":
                             speak("hello dear guest can u stand in front of me")
                         else:
                             speak(real_name)
@@ -1788,12 +1856,13 @@ if __name__ == "__main__":
                             time.sleep(2)
                         aaa = dictt["Voice"].lower()
                         print("answer:", aaa)
-                        current_file_name = output_dir + "GSPR_people" + str(current_time) +"_command_"+str(i)+".jpg"
+                        current_file_name = output_dir + "GSPR_people" + str(current_time) + "_command_" + str(
+                            i) + ".jpg"
                         new_file_name = output_dir + "GSPR_people.jpg"
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command",i,"File name:", current_file_name)
+                            print("command", i, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
@@ -1885,7 +1954,7 @@ if __name__ == "__main__":
                         name_position = "TELL_LIST"
                     current_time = now.strftime("%H:%M:%S")
                     question = "My question is " + liyt[name_position]
-                    if real_name=="guest":
+                    if real_name == "guest":
                         speak("dear guest")
                     else:
                         speak(real_name)
@@ -1946,7 +2015,7 @@ if __name__ == "__main__":
                 break
         walk_to("host")
         print("***************")
-        print("command",i,end=" ")
+        print("command", i, end=" ")
         speak(final_speak_to_guest)
         print("***************")
         time.sleep(2)
