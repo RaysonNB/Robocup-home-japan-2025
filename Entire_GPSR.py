@@ -723,7 +723,7 @@ if __name__ == "__main__":
     for i in range(0, len(command_list)):
         dining_room_action=0
         qr_code_detector = cv2.QRCodeDetector()
-        data = ""
+        #data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = command_list[i]
         while True:
@@ -849,9 +849,14 @@ if __name__ == "__main__":
                 print(s)
                 pre_s = s
             if _frame2 is None:
-                print("no frame")
+                print("no frame2")
+                continue
             if _depth2 is None:
-                print("no depth")
+                print("no depth2")
+                continue
+            if _frame1 is None:
+                print("no frame1")
+                continue
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
             catch_image = _frame1.copy()
@@ -1731,11 +1736,11 @@ if __name__ == "__main__":
 
                     if "what" in s:
                         if "today" in s:
-                            answer = f"It is {current_month} {day_of_month}"
+                            answer = f"It is 2nd of May"
                         elif "team" in s and "name" in s:
                             answer = "My team's name is FAMBOT"
                         elif "tomorrow" in s:
-                            answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
+                            answer = f"It is 3rd of May"  # Note: you might need to handle month boundaries
                         elif "your" in s and "name" in s:
                             answer = "My name is FAMBOT robot"
                         elif "time" in s:
@@ -1992,7 +1997,6 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        action = 1
                         step = "none"
                         action = "none"
                         step_action = 2
@@ -2014,9 +2018,9 @@ if __name__ == "__main__":
                             "something" in user_input and "yourself" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
                     elif "what day today is" in user_input or ("today" in user_input and "day" in user_input):
-                        speak("today is 25 th April in 2025")
+                        speak("today is 2 nd May in 2025")
                     elif "what day tomorrow is" in user_input or ("tomorrow" in user_input and "say" in user_input):
-                        speak("today is 26 th April in 2025")
+                        speak("today is 3 rd May in 2025")
                     elif "where robocup is held this year" in user_input or (
                             "where" in user_input and "robocup" in user_input and "year" in user_input):
                         speak("the robocup 2025 is held in Brazil,Salvador")
