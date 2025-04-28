@@ -426,6 +426,8 @@ def walk_to(name):
             text = chassis.status_text
             if code == 3:
                 break
+            if code == 4:
+                break
         time.sleep(1)
         clear_costmaps
 
