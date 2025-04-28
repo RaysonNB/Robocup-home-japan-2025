@@ -689,18 +689,24 @@ if __name__ == "__main__":
     step = "none"
     confirm_command = 0
     walk_to("host")
-    command_list = ["Find a standing person in the dining room and follow them to the hallway",
-                    "Say hello to the person wearing a yellow clothes in the hallway and say where RoboCup is held this year",
-                    "Go to the hallway then meet Angel and answer a quiz",
-                    "Find a sitting person in the hallway and take them to the tray B",
-                    "Tell me what is the largest object on the chair B",
-                    "Tell me how many kitchen items there are on the chair B",
-                    "Tell me how many people in the dining room are wearing black sweaters",
-                    "Tell me the height of the person at the chair B",
-                    "Tell me the name of the person at the chair B",
-                    "Get a lunch box from the chair A and put it on the long table A",
-                    "Give me a coffee from the long table A"]
-    for i in range(0, 10):
+    command_list = [""
+                    "Tell me how many task items there are on the right tray",
+                    "Lead the person pointing to the left from the right Kachaka station to the bed",
+                    "Follow the squatting person at the pen holder",
+                    "Grasp a noodles from the trash bin and put it on the container",
+                    "Follow Sophia from the left tray to the dining room",
+                    "Tell me how many kitchen items there are on the trash bin",
+                    "Tell me the age of the person standing in the living room",
+                    "Give me a light bulb from the trash bin",
+                    "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
+                    "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
+                    "Give me a cookies from the tall table",
+                    "Tell me how many people in the dining room are wearing black jackets",
+                    "Meet Basil at the tall table then look for them in the study room",
+                    "Tell me how many people crossing one's arms are in the study room",
+                    "Tell me what is the thinnest object on the shelf"
+                    ]
+    for i in range(0, len(command_list)):
 
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
@@ -790,6 +796,28 @@ if __name__ == "__main__":
         skip_cnt_vd = 0
         nav1_skip_cnt = 0
         output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+        uuu = data.lower()
+        real_name="guest"
+        if "chikako" in uuu:
+            real_name="chikako"
+        elif "yoshimura" in uuu:
+            real_name="yoshimura"
+        elif "basil" in uuu:
+            real_name="basil"
+        elif "angel" in uuu:
+            real_name="angel"
+        elif "jack" in uuu:
+            real_name="jack"
+        elif "andrew" in uuu:
+            real_name="andrew"
+        elif "sophia" in uuu:
+            real_name="sophia"
+        elif "mike" in uuu:
+            real_name="mike"
+        elif "leo" in uuu:
+            real_name="leo"
+        elif "tom" in uuu:
+            real_name="tom"
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -1030,7 +1058,7 @@ if __name__ == "__main__":
                             print("your height is", (1000 - target_y + 330) / 10.0)
                             final_height = (1000 - target_y + 330) / 10.0
                             step_action = 2
-                            final_speak_to_guest = "the guys height is " + str(final_height)
+                            final_speak_to_guest = "the guys height is " + str(final_height)+" cm"
                     if "age" in user_input or "old" in user_input:
                         code_image = _frame2.copy()
                         resultImg, faceBoxes = highlightFace(faceNet, code_image)
@@ -1141,6 +1169,7 @@ if __name__ == "__main__":
                         # hunter
                         # olivia
                         if step_speak == 0:
+                            #speak("hello")
                             speak("hello guest can u speak your name to me")
                             speak("speak it in complete sentence, for example, my name is fambot")
                             speak("speak after the")
@@ -1162,7 +1191,7 @@ if __name__ == "__main__":
                             if "angel" in s: name_cnt = "angel"
                             if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
                             if "andrew" in s or "angelo" in s: name_cnt = "andrew"
-                            if "sohpia" in s: name_cnt = "sohpia"
+                            if "sophia" in s: name_cnt = "sophia"
                             if "mike" in s: name_cnt = "mike"
                             if "leo" in s: name_cnt = "leo"
                             if "tom" in s: name_cnt = "tom"
@@ -1235,6 +1264,7 @@ if __name__ == "__main__":
                         except PermissionError:
                             print("File renamed failed")
                         if "yes" in aaa or "ys" in aaa:
+                            
                             speak("found you the guest " + feature)
                             action = "front"
                             step = "none"
@@ -1311,17 +1341,23 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        speak("hello dear guest can u stand behind me and I will follow u now")
+                        speak("hello")
+                        speak(real_name)
+                        speak("can u stand behind me and I will follow u now")
                         time.sleep(2)
                         for i in range(78):
                             move(0, -0.35)
                             time.sleep(0.125)
-                        speak("dear guest please say robot you can stop")
+                        if real_name=="guest":
+                            speak("dear guest please say robot you can stop")
+                        else:
+                            speak(real_name)
+                            speak("please say robot you can stop")
                         # time.sleep(0.5)
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
-                        speak(
-                            "hello dear guest please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak("hello dear "+real_name)
+                        speak("please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1511,7 +1547,8 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
-                        speak("hello dear guest can u stand in front of me and I will guild u now")
+                        speak("hello dear "+real_name)
+                        speak("can u stand in front of me and I will guild u now")
                         action = 1
                         step = "none"
                         step_action = 3
@@ -1521,7 +1558,11 @@ if __name__ == "__main__":
                         name_position = "ROOM2"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
-                    speak("dear guest here is " + liyt[name_position] + " and I will go back now")
+                    if real_name=="guest":
+                        speak("dear guest ")
+                    else:
+                        speak(real_name)
+                    speak("here is " + liyt[name_position] + " and I will go back now")
                     step_action = 100
             # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
@@ -1541,7 +1582,11 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     if action == "speak":
-                        speak("hello dear guest can u stand in front of me")
+                        if real_name=="guest":
+                            speak("hello dear guest can u stand in front of me")
+                        else:
+                            speak(real_name)
+                            speak("can u stand in front of me")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1549,7 +1594,8 @@ if __name__ == "__main__":
                     # question detect
                     answer = "none"
                     none_cnt = 0
-                    speak("dear guest please speak your question in complete sentence after the")
+                    speak(real_name)
+                    speak("please speak your question in complete sentence after the")
                     playsound("nigga2.mp3")
                     speak("sound")
                     # time.sleep(0.5)
@@ -1818,7 +1864,10 @@ if __name__ == "__main__":
                         name_position = "TELL_LIST"
                     current_time = now.strftime("%H:%M:%S")
                     question = "My question is " + liyt[name_position]
-                    speak("dear guest")
+                    if real_name=="guest":
+                        speak("dear guest")
+                    else:
+                        speak(real_name)
                     time.sleep(1)
                     user_input = user_input.lower()
                     if "something about yourself" in user_input or (
@@ -1859,7 +1908,11 @@ if __name__ == "__main__":
                                 result = a * b
                             elif operation == 'divided by':
                                 result = a / b
-                        speak("hello dear guest" + str(result))
+                        if real_name == "guest":
+                            speak("hello dear guest")
+                        else:
+                            speak(real_name)
+                        speak(str(result))
                     step_action = 3
                 if step_action == 3:
                     time.sleep(1)
