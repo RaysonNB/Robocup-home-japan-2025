@@ -700,26 +700,43 @@ if __name__ == "__main__":
     confirm_command = 0
     walk_to("host")
 
-    command_list = [""
-                    "Tell me how many task items there are on the right tray",
-                    "Lead the person pointing to the left from the right Kachaka station to the bed",
-                    "Follow the squatting person at the pen holder",
-                    "Grasp a noodles from the trash bin and put it on the container",
-                    "Follow Sophia from the left tray to the dining room",
-                    "Tell me how many kitchen items there are on the trash bin",
-                    "Tell me the age of the person standing in the living room",
-                    "Tell me how tall of the person standing in the living room",
-                    "Tell me the name of the person standing in the living room",
-                    "Tell me the shirt color of the person standing in the living room"
-                    "Give me a light bulb from the trash bin",
-                    "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
-                    "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-                    "Give me a cookies from the tall table",
-                    "Tell me how many people in the dining room are wearing white t-shirt",
-                    "Meet Basil at the tall table then look for them in the study room",
-                    "Tell me how many people crossing one's arms are in the study room",
-                    "Tell me what is the thinnest object on the shelf"
-                    ]
+    command_list = [
+        "Take a task item from the trash bin and bring it to Tom in the living room",
+        "Go to the bedroom then locate a kitchen item and fetch it and put it on the left Kachaka shelf",
+        "Follow the person giving the V sign at the trash bin",
+        "Tell me how many people raising their right arm are in the bedroom",
+        "Tell me what is the largest food item on the right Kachaka shelf",
+        "Tell me how many kitchen items there are on the right Kachaka shelf",
+        "Say what day today is to the person raising their right arm in the living room",
+        "Give me a cup from the right tray",
+        "Meet Basil in the living room and answer a question",
+        "Tell me how tall is the person at the bed",
+        "Tell me how old is the person at the bed",
+        "Tell me t-shirt color is the person at the bed",
+        "Tell me the name is the person at the bed",
+        "Tell what the weather is like today to the person raising their right arm in the living room",
+        "Navigate to the bedroom then find a food item and grasp it and give it to the person crossing one's arms in the study room",
+        "Navigate to the bedroom then locate a light bulb and grasp it and bring it to me",
+        "Lead Sophia from the shelf to the right Kachaka shelf",
+        "Tell me how many task items there are on the right tray",
+        "Lead the person pointing to the left from the right Kachaka station to the bed",
+        "Follow the squatting person at the pen holder",
+        "Grasp a noodles from the trash bin and put it on the container",
+        "Follow Sophia from the left tray to the dining room",
+        "Tell me how many kitchen items there are on the trash bin",
+        "Tell me the age of the person standing in the living room",
+        "Tell me how tall of the person standing in the living room",
+        "Tell me the name of the person standing in the living room",
+        "Tell me the shirt color of the person standing in the living room",
+        "Give me a light bulb from the trash bin",
+        "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
+        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
+        "Give me a cookies from the tall table",
+        "Tell me how many people in the dining room are wearing white t-shirt",
+        "Meet Basil at the tall table then look for them in the study room",
+        "Tell me how many people crossing one's arms are in the study room",
+        "Tell me what is the thinnest object on the shelf"
+    ]
     for i in range(0, len(command_list)):
         dining_room_action=0
         qr_code_detector = cv2.QRCodeDetector()
@@ -1319,6 +1336,18 @@ if __name__ == "__main__":
                         nav1_skip_cnt += 1
                         if nav1_skip_cnt >= 75:
                             nav1_skip_cnt = 0
+                            num1, num2, num3 = dining_room_dif["din2"]
+                            chassis.move_to(num1, num2, num3)
+                            while not rospy.is_shutdown():
+                                # 4. Get the chassis status.
+                                code = chassis.status_code
+                                text = chassis.status_text
+                                if code == 3:
+                                    break
+                                if code == 4:
+                                    break
+                            time.sleep(1)
+                            clear_costmaps
                             dining_room_action=2
                     if step == "turn" and dining_room_action == 2:
                         move(0, -0.2)
@@ -1546,6 +1575,18 @@ if __name__ == "__main__":
                         nav2_skip_cnt += 1
                         if nav2_skip_cnt >= 75:
                             nav2_skip_cnt = 0
+                            num1, num2, num3 = dining_room_dif["din2"]
+                            chassis.move_to(num1, num2, num3)
+                            while not rospy.is_shutdown():
+                                # 4. Get the chassis status.
+                                code = chassis.status_code
+                                text = chassis.status_text
+                                if code == 3:
+                                    break
+                                if code == 4:
+                                    break
+                            time.sleep(1)
+                            clear_costmaps
                             dining_room_action=2
                     if step == "turn" and dining_room_action == 2:
                         move(0, -0.2)
@@ -1875,6 +1916,18 @@ if __name__ == "__main__":
                         speech2_turn_skip += 1
                         if speech2_turn_skip >= 75:
                             speech2_turn_skip = 0
+                            num1, num2, num3 = dining_room_dif["din2"]
+                            chassis.move_to(num1, num2, num3)
+                            while not rospy.is_shutdown():
+                                # 4. Get the chassis status.
+                                code = chassis.status_code
+                                text = chassis.status_text
+                                if code == 3:
+                                    break
+                                if code == 4:
+                                    break
+                            time.sleep(1)
+                            clear_costmaps
                             dining_room_action=2
                     if step == "turn" and dining_room_action == 2:
                         move(0, -0.2)
