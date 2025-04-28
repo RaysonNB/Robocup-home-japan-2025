@@ -1516,13 +1516,13 @@ if __name__ == "__main__":
                     step = "turn"
                     action = "find"
                     nav2_skip_cnt = 0
-                if step_action == 1:
-                    # walk in front of the guy
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
                     if name_position in liyt:
                         feature = liyt[name_position]
+                if step_action == 1:
+                    # walk in front of the guy
                     if step == "turn":
                         move(0, -0.2)
                         nav2_skip_cnt = 0
@@ -1828,17 +1828,17 @@ if __name__ == "__main__":
                     action = "find"
                     step_action = 1
                     speech2_turn_skip = 0
-                if step_action == 1:
-                    # walk in front of the guy
                     name_position = "$POSE/GESTURE"
                     if "$POSE/GESTURE" not in liyt:
                         name_position = "POSE/GESTURE"
                     if name_position in liyt:
                         feature = liyt[name_position]
+                if step_action == 1:
+                    # walk in front of the guy
                     if step == "turn":
                         move(0, -0.2)
                         speech2_turn_skip += 1
-                        if speech2_turn_skip >= 500:
+                        if speech2_turn_skip >= 250:
                             speech2_turn_skip = 0
                             step = "none"
                             action = "none"
