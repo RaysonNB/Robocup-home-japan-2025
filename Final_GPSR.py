@@ -699,6 +699,7 @@ if __name__ == "__main__":
     step = "none"
     confirm_command = 0
     walk_to("host")
+
     command_list = [""
                     "Tell me how many task items there are on the right tray",
                     "Lead the person pointing to the left from the right Kachaka station to the bed",
@@ -720,7 +721,7 @@ if __name__ == "__main__":
                     "Tell me what is the thinnest object on the shelf"
                     ]
     for i in range(0, len(command_list)):
-
+        dining_room_action=0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
@@ -741,6 +742,8 @@ if __name__ == "__main__":
                 break
         cv2.destroyAllWindows()
         data = command_list[i]
+        if "dining" in data:
+            dining_room_action=1
         # confirm
         if confirm_command == 0:
             speak("dear host your command is")
@@ -1051,7 +1054,7 @@ if __name__ == "__main__":
                 if step == "turn":
                     move(0, -0.2)
                     v2_turn_skip += 1
-                    if v2_turn_skip >= 500:
+                    if v2_turn_skip >= 250:
                         v2_turn_skip = 0
                         step = "none"
                         action = "none"
@@ -1312,7 +1315,7 @@ if __name__ == "__main__":
                     if step == "turn":
                         move(0, -0.2)
                         nav1_skip_cnt += 1
-                        if nav1_skip_cnt >= 500:
+                        if nav1_skip_cnt >= 250:
                             step = "none"
                             action = "none"
                             step_action = 3
@@ -1523,7 +1526,7 @@ if __name__ == "__main__":
                     if step == "turn":
                         move(0, -0.2)
                         nav2_skip_cnt = 0
-                        if nav2_skip_cnt >= 500:
+                        if nav2_skip_cnt >= 250:
                             step = "none"
                             action = "none"
                             step_action = 3
