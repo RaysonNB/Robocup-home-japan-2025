@@ -10,7 +10,17 @@ from LemonEngine.hardwares.respeaker import Respeaker
 from LemonEngine.hardwares.chassis import Chassis
 from RobotChassis import RobotChassis
 
-POINT_1 = (3.498, 3.339, -1.664)
+# TABLE_P = (3.498, 3.339, -1.664)
+# FOOD_POINT = (6.34, 3.07, 1.5)
+# TASK_POINT = (5.13, 2.90, 1.5)
+# UNKNOWN_POINT = (3.97, 2.85, 1.5)
+# KITCHEN_POINT = (2.05, 3.72, 0)
+
+TABLE_P = (1.772, -0.118, 0.8)
+FOOD_POINT = (0.278, -0.139, -2.462)
+TASK_POINT = (-0.529, 0.443, 2.197)
+UNKNOWN_POINT = (1.638, -0.231, -0.910)
+KITCHEN_POINT = (1.638, -0.231, -0.910)
 
 
 
@@ -18,7 +28,9 @@ PROMPT = """
 # Instruction
 Analyze the input image. Detect distinct objects and try your best to classify them using the `Object List` below. 
 If an object isn't listed, use category `Unknown`. Be careful not to leave any items behide
-Output *only* a JSON list containing objects with keys `"object"` and `"category"`. List each object type only once.
+You Must output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
+If no object here, please output a empty json list ```json[]```
+
 
 # Object List
 | ID | Object        | Category     |
@@ -33,7 +45,8 @@ Output *only* a JSON list containing objects with keys `"object"` and `"category
 | 8  | Light Bulb    | Task Item    |
 | 9  | Block         | Task Item    |
 
-* Note: The bulb will be packed in a box
+* Note: The `Light Bulb` will be packed in a box
+* Furnitures (i.e. Table, Chair) is not an object
 
 # Example Output
 ```json
@@ -46,6 +59,7 @@ Output *only* a JSON list containing objects with keys `"object"` and `"category
 """
 
 cmd_vel=rospy.Publisher("/cmd_vel",Twist,queue_size=10)
+
 
 def generate_content(prompt_text: str = None, image_path: str = None) -> dict:
     """
@@ -95,19 +109,75 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
     cmd_vel.publish(msg)
 
 
+
+
+
 def main():
     clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
-	
+    
     
     chassis = RobotChassis()
-    # navigator = Navigator()
     respeaker = Respeaker(enable_espeak_fix=True)
-    cam1 = Camera("/cam2/color/image_raw", "bgr8")
-    cam2 = Camera("/cam2/depth/image_raw", "passthrough")
+
+    # navigator = Navigator()
+    cam1 = Camera("/camera/color/image_raw", "bgr8")
+    cam2 = Camera("/camera/depth/image_raw", "passthrough")
     width, height = cam1.width, cam1.height
     cx, cy = width // 2, height // 2
     rate = rospy.Rate(20)
+    
+    def walk_to(point):
+        logger.info(f"Walk to {point}")
+        tried = 0
+        chassis.move_to(*point)
+        clear_costmaps
+        while not rospy.is_shutdown():
+            # 4. Get the chassis status.
+            rate = rospy.Rate(20)
+            code = chassis.status_code
+            text = chassis.status_text
+            if code == 3:
+                logger.success("Point Reached!")
+                return True
+                
+            if code == 4:
+                logger.error(f"Plan Failed (tried {tried})")
+                respeaker.say("I am blocked, please move aside")
+                clear_costmaps
+                chassis.move_to(*point)
+                if tried > 5:
+                    break
+                tried += 1
 
+        chassis.move_base.cancel_all_goals()
+        return False
+                
+    def ask_gemini(text):
+        match = False
+        while True:
+            logger.info("Asking Gemini for objects")
+            frame = cam1.get_frame()
+            cv2.imwrite("./image.jpg", frame)
+            text = generate_content(text, "./image.jpg").get('generated_text')
+            if text is None:
+                respeaker.say("Failed")
+                continue
+            text = text.replace("\n", "")
+            text = text.replace("\r", "")
+            print("Gemini Res", text)
+    
+            pattern = r"```json(.*?)```"  # Corrected regex pattern
+            match = re.search(pattern, text)
+    
+            if match:
+                json_string = match.group(1)  # Extract the content inside ```json ... ```
+                logger.debug(json_string)
+                json_object = json.loads(json_string)
+                return json_object
+
+
+    ##################################
+    
     # while not rospy.is_shutdown():
     #     frame = cam1.get_frame()
     #     depth_frame = cam2.get_frame()
@@ -124,7 +194,6 @@ def main():
     #             time.sleep(0.1)
             
     #         move(0, 0)
-
     #         break
 
     #     cv2.imshow("depth", depth_frame)
@@ -132,68 +201,36 @@ def main():
     #     if cv2.waitKey(1) & 0xFF == ord('q'):
     #         break
 
-    # clear_costmaps
-
-    # # navigate
-    # chassis.move_to(*POINT_1)
-    # while not rospy.is_shutdown():
-    #     # 4. Get the chassis status.
-    #     rate = rospy.Rate(20)
-    #     code = chassis.status_code
-    #     text = chassis.status_text
-    #     logger.debug(f"Nav: {text}, Code: {code}")
-    #     if code == 3:
-    #         break
-
-    # clear_costmaps
-    
-    
-    respeaker.say("I am recognizing objects")
-    json_object = None
+    clear_costmaps
+    walk_to(TABLE_P)
     
     while True:
-        logger.info("Asking Gemini for objects")
-        frame = cam1.get_frame()
-        cv2.imwrite("./image.jpg", frame)
-        text = generate_content(PROMPT, "./image.jpg").get('generated_text')
-        if text is None:
-            respeaker.say("Failed")
-            continue
-        text = text.replace("\n", "")
-        text = text.replace("\r", "")
-        print("Gemini Res", text)
-
-        pattern = r"```json(.*?)```"  # Corrected regex pattern
-        match = re.search(pattern, text)
-
-        if match:
-            json_string = match.group(1)  # Extract the content inside ```json ... ```
-            json_object = json.loads(json_string)
-            print(json_string)
+        respeaker.say("I am recognizing objects")
+        json_object = ask_gemini(PROMPT)
+        
+        if len(json_object) == 0:
+            respeaker.say("It seems the table is empty, task end")
             break
-	
-	
-    respeaker.say("I see")
-    for a_object in json_object:
-        print(a_object)
-        respeaker.say("Help me take " + a_object["object"])
-        time.sleep(5)
+        
+        respeaker.say("I see")
+        for a_object in json_object[:3]:
+            print(a_object)
+            respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
+            print("**OPEN_ARM")
+            time.sleep(5)
+            print("**CLOSE_ARM")
 
-        for _ in range(25):
-            move(0, 1.0)
-            time.sleep(0.1)
-        time.sleep(1)
+            respeaker.say(a_object["category"])
+            if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
+            if a_object["category"].lower() == "task item":     walk_to(TASK_POINT)
+            if a_object["category"].lower() == "kitchen item":    walk_to(KITCHEN_POINT)
+            if a_object["category"].lower() == "food":        walk_to(FOOD_POINT)
+            
+            respeaker.say("Putting Object")
+            print("**OPEN_ARM")
+            time.sleep(5)
 
-        respeaker.say("Putting to " + a_object["category"])
-
-
-        for _ in range(25):
-            move(0, -1.0)
-            time.sleep(0.1)
-        time.sleep(1)
-
-    
-
+            walk_to(TABLE_P)
     
 
 if __name__ == '__main__':
