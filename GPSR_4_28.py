@@ -1154,16 +1154,16 @@ if __name__ == "__main__":
                                 step_action = 2
                                 speak("I can't hear you I gonna go now")
                                 print(skip_cnt_vd)
-                            if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
-                            if "aaron" in s or "ellen" in s or "evan" in s: name_cnt = "aaron"
+                            if "charcoal" in s or "chicago" in s or "chikako" in s: name_cnt = "chikako"
+                            if "yoshimura" in s or "shima" in s or "shi" in s or "tsushima" in s: name_cnt = "yoshimura"
+                            if "basil" in s or "stac" in s or "stace" in s or "bas" in s or "basel" in s: name_cnt = "basil"
                             if "angel" in s: name_cnt = "angel"
-                            if "adam" in s or "ada" in s or "aiden" in s: name_cnt = "adam"
-                            if "vanessa" in s or "lisa" in s or "felicia" in s: name_cnt = "vanessa"
-                            if "chris" in s: name_cnt = "chris"
-                            if "william" in s: name_cnt = "william"
-                            if "max" in s or "mix" in s: name_cnt = "max"
-                            if "hunter" in s: name_cnt = "hunter"
-                            if "olivia" in s: name_cnt = "olivia"
+                            if "check" in s or "track" in s or "jack" in s: name_cnt = "jack"
+                            if "andrew" in s or "angelo" in s: name_cnt = "andrew"
+                            if "sohpia" in s: name_cnt = "sohpia"
+                            if "mike" in s: name_cnt = "mike"
+                            if "leo" in s: name_cnt = "leo"
+                            if "tom" in s: name_cnt = "tom"
                             if name_cnt != "none":
                                 speak("hello " + name_cnt + " I gonna go now.")
                                 final_speak_to_guest = "the guys name is " + name_cnt
