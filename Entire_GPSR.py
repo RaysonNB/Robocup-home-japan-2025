@@ -107,6 +107,7 @@ def callback_voice(msg):
 
 
 def speak(g):
+    print("[robot say]:",end=" ") 
     os.system(f'espeak -s 165 "{g}"')
     # rospy.loginfo(g)
     print(g)
@@ -352,7 +353,7 @@ locations = {
 cout_location = {
     "living room": [1.153, 3.338, 0],
     "bedroom": [1.153, 3.338, 3.14],
-    "dining room": [-1.581, -0.345, 0.15],
+    "dining room": [-1.545, -0.303, 1.57],
     "study room": [-1.581, -0.345, 0.15]
 }
 
@@ -440,10 +441,11 @@ if __name__ == "__main__":
     confirm_command = 0
     walk_to("instruction point")
     command_list = [
-        "Say what day today is to the person raising their right arm in the living room",
+        "Say what day today is to the person raising their right arm in the dining room",
         "Give me a cup from the right tray",
-        "Meet Basil in the living room and answer a question",
+        "Meet Basil in the dining room and answer a question",
         "Tell me the shirt color of the person standing in the living room",
+        "what color of t-shirt Jack is wearing in the dining room",
         "Give me a light bulb from the trash bin",
         "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
         "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
@@ -1672,7 +1674,7 @@ if __name__ == "__main__":
                     if failed_cnt > 5:
                         speak("I can't get your question, I gonna go back now")
                         step_action = 4
-                    if answer == "none" and none_cnt >= 120 and s != pre_s:
+                    if answer == "none" and none_cnt >= 500 and s != pre_s:
                         speak("can u please speak it again")
                         none_cnt = 0
                         failed_cnt += 1
