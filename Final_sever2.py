@@ -8,12 +8,13 @@ import PIL.Image
 import cv2
 import numpy as np
 from datetime import datetime
-pathnum=r"C:/Users/rayso/Desktop/python/"
+
+pathnum = r"C:/Users/rayso/Desktop/python/"
 from Generate_command import kitchen_items
 
-genai.configure(api_key='AIzaSyBj9nF9Lq9TanhVMyue4qn_xbKLxyCnn2k')
+genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')
 model = genai.GenerativeModel("gemini-2.0-flash")
-cnt_yy=0
+cnt_yy = 0
 while True:
 
     while True:
@@ -21,19 +22,19 @@ while True:
         response_data = r.text
         print("Response_data_nigga", response_data)
         dictt = json.loads(response_data)
-        if dictt["Steps"]=="-1" or dictt["Voice"]=="":
+        if dictt["Steps"] == "-1" or dictt["Voice"] == "":
             time.sleep(2)
         else:
             break
-    if dictt["Steps"]=="first":
+    if dictt["Steps"] == "first":
         s1 = dictt["Voice"]
-        s="***The Sentence:"+s1
-        print("question",s)
-        sample_txt ="""
-        
+        s = "***The Sentence:" + s1
+        print("question", s)
+        sample_txt = """
+
         (The Sentence)(Task: Sentence Structure)(I given u)
         Manipulation1: Go to the $ROOM1, grasp the $OBJECT on the $PLACE1 and place it on the $PLACE2.
-        Manipulation2: Go to the $ROOM1, grasp the $OBJECT on the $PLACE1 and give it to $PERSON on the $ROOM2.(if &PERSON is me than $ROOM2:"host")
+        Manipulation2: Go to the $ROOM1, grasp the $OBJECT on the $PLACE1 and give it to $PERSON on the $ROOM2.(if &PERSON is me than $ROOM2:"instruction point" just edit $ROOM2)
         Vision (Enumeration)1: Tell me how many $CATEGORY_OBJ here are on the $PLACE1.
         Vision (Enumeration)2: Tell me how many people in the $ROOM1 are $POSE/GESTURE.
         Vision (Description)1: Tell me what is the $OBJ_COMP object on the $PLACE1.
@@ -42,33 +43,33 @@ while True:
         Navigation2: Go to the $ROOM1, find $POSE/GESTURE person and guide (him|her) to the $ROOM2.
         Speech1: Go to the $ROOM1, find $PERSON at the $PLACE1 and answer (his | her) question.
         Speech2: Go to the $ROOM1, find the person who is $POSE/GESTURE and tell (him | her) $TELL_LIST.
-        
+
         %possible information options
         %ROOM         : study room, living room, bed room, dining room
         %PLACE        : counter, left tray, right tray, pen holder, container, left kachaka shelf, right kachaka shelf, low table, tall table, trash bin, left chair, right chair, left kachaka station, right kachaka station, shelf, bed, dining table, couch, entrance, exit
         $OBJECT       : Noodles, Cookies, Potato Chips, Detergent, Cup, Lunch Box, Dice, Light Bulb, Glue gun
         $PERS_INFO    : name, shirt color, age, height
         $CATEGORY_OBJ : Food Item, Kitchen Item, Task Item
-        
-        
+
+
         (Questions)
-        Question1: which Task is it(just one) [Manipulation1,Manipulation2,Vision (Enumeration)1,Vision (Enumeration)2,Vision (Description)1,Vision (Description)2,Navigation1,Navigation2,Speech1,Speech2] ?
+        Question1: which Task is it(just one) [Manipulation1, Manipulation2, Vision (Enumeration)1, Vision (Enumeration)2, Vision (Description)1, Vision (Description)2, Navigation1, Navigation2, Speech1, Speech2] ?
         Question2: give me the $informations(make it in dictionary), for example {"$ROOM1":"Living room","$PLACE1":"Tray A"} ?
         Question3: what the sentence mean, and what I should do(20words)(just give me one sentence)?
-        
-        
-        
+
+
+
         (answer_format(python_dictronary_format),dont edit it)
-        
+
         *** {"1":[],"2":[],"3":[]} ***
         """
-        response = model.generate_content([s,sample_txt])
+        response = model.generate_content([s, sample_txt])
         file_data_string = response.text
         print(file_data_string)
-        file_data_string=file_data_string.replace("```","")
-        file_data_string=file_data_string.replace("python","")
-        file_data_string=file_data_string.replace("***","")
-        file_data_string=file_data_string.replace("json","")
+        file_data_string = file_data_string.replace("```", "")
+        file_data_string = file_data_string.replace("python", "")
+        file_data_string = file_data_string.replace("***", "")
+        file_data_string = file_data_string.replace("json", "")
         dict = json.loads(file_data_string)
         Question1 = dict["1"]
         s = str(dict["2"])
@@ -83,7 +84,7 @@ while True:
             "Question2": Question2,
             "Question3": Question3,
             "Steps": 1,
-            "Voice":"Voice",
+            "Voice": "Voice",
             "Questionasking": "None",
             "answer": "None"
         }
@@ -92,8 +93,9 @@ while True:
         result = response.json()
         print(result)
         print("sent")
-    elif dictt["Steps"]=="checkpeople":
-        promt = dictt["Questionasking"]+" answer my question ys or no only"
+        time.sleep(2)
+    elif dictt["Steps"] == "checkpeople":
+        promt = dictt["Questionasking"] + " answer my question ys or no only"
         image_url = f"http://192.168.50.147:8888{'/uploads/GSPR_people.jpg'}"
         print("Fetching image from:", image_url)
         image_response = requests.get(image_url)
@@ -106,12 +108,12 @@ while True:
         print(name_img)
         # Save the image using OpenCV
 
-        cv2.imwrite(pathnum+name_img, img)
+        cv2.imwrite(pathnum + name_img, img)
         print("Image saved successfully using OpenCV!")
         # Configuration and setup
-        genai.configure(api_key='AIzaSyBj9nF9Lq9TanhVMyue4qn_xbKLxyCnn2k')  # Replace with your actual API key
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')  # Replace with your actual API key
         model = genai.GenerativeModel("gemini-2.0-flash")
-        path_sample = "C:/Users/rayso/Desktop/python/"+name_img # Use raw string to handle backslashes
+        path_sample = "C:/Users/rayso/Desktop/python/" + name_img  # Use raw string to handle backslashes
         # Prepare the prompt template
         sample_txt = promt
         img = PIL.Image.open(path_sample)
@@ -131,13 +133,14 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
-    elif dictt["Steps"]=="Description":
+        time.sleep(2)
+    elif dictt["Steps"] == "Description":
         promt2 = dictt["Voice"]
-        objects='''
-        
+        objects = '''
+
         the Objects can only be : Noodles, Cookies, Potato Chips, Detergent, Cup, Lunch Box, Dice, Light Bulb, Glue gun
         '''
-        promt = promt2+objects
+        promt = promt2 + objects
         image_url = f"http://192.168.50.147:8888{'/uploads/GSPR.jpg'}"
         print("Fetching image from:", image_url)
         image_response = requests.get(image_url)
@@ -147,10 +150,10 @@ while True:
         # Decode the image using OpenCV
         img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         # Save the image using OpenCV
-        cv2.imwrite(pathnum+"Robot_view.jpg", img)
+        cv2.imwrite(pathnum + "Robot_view.jpg", img)
         print("Image saved successfully using OpenCV!")
         # Configuration and setup
-        genai.configure(api_key='AIzaSyBj9nF9Lq9TanhVMyue4qn_xbKLxyCnn2k')  # Replace with your actual API key
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')  # Replace with your actual API key
         model = genai.GenerativeModel("gemini-2.0-flash")
         path_sample = "C:/Users/rayso/Desktop/python/Robot_view.jpg"  # Use raw string to handle backslashes
         # Prepare the prompt template
@@ -172,17 +175,18 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
-    elif dictt["Steps"]=="Enumeration":
+        time.sleep(2)
+    elif dictt["Steps"] == "Enumeration":
         promt2 = dictt["Voice"].lower()
         if "food" in promt2 or "kitchen" in promt2 or "item" in promt2:
-            promt1 ='''
+            promt1 = '''
                     (Category)      (Object)
                     Food:           Noodles, Cookies, Potato Chips
                     Kitchen Item:   Detergent, Cup, Lunch Box
                     Task Item :     Light Bulb, Dice, Glue gun
                     Question:
                     '''
-            promt = promt1+promt2
+            promt = promt1 + promt2
         else:
             promt = promt2
 
@@ -195,10 +199,10 @@ while True:
         # Decode the image using OpenCV
         img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         # Save the image using OpenCV
-        cv2.imwrite(pathnum+"Robot_view.jpg", img)
+        cv2.imwrite(pathnum + "Robot_view.jpg", img)
         print("Image saved successfully using OpenCV!")
         # Configuration and setup
-        genai.configure(api_key='AIzaSyBj9nF9Lq9TanhVMyue4qn_xbKLxyCnn2k')  # Replace with your actual API key
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')  # Replace with your actual API key
         model = genai.GenerativeModel("gemini-2.0-flash")
         path_sample = "C:/Users/rayso/Desktop/python/Robot_view.jpg"  # Use raw string to handle backslashes
         # Prepare the prompt template
@@ -220,6 +224,7 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
+        time.sleep(2)
     elif dictt["Steps"] == "talk_list":
         now = datetime.now()
 
@@ -228,7 +233,7 @@ while True:
         current_month = now.strftime("%B")  # Full month name
         current_day_name = now.strftime("%A")  # Full weekday name
         day_of_month = now.strftime("%d")  # Day of the month as zero-padded decimal
-        genai.configure(api_key='AIzaSyAHGCTBQvnNMTIXhcAFt0gEkQvAeG9mQ5A')
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')
         model = genai.GenerativeModel("gemini-2.0-flash")
         sample_txt = f'''
         #	Talk , Answer
@@ -260,7 +265,7 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
-
+        time.sleep(2)
     elif dictt["Steps"] == "answer_list":
         now = datetime.now()
 
@@ -269,7 +274,7 @@ while True:
         current_month = now.strftime("%B")  # Full month name
         current_day_name = now.strftime("%A")  # Full weekday name
         day_of_month = now.strftime("%d")  # Day of the month as zero-padded decimal
-        genai.configure(api_key='AIzaSyAHGCTBQvnNMTIXhcAFt0gEkQvAeG9mQ5A')
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')
         model = genai.GenerativeModel("gemini-2.0-flash")
         sample_txt = f'''
         Today is 10th April in 2025
@@ -312,6 +317,7 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
+        time.sleep(2)
     elif dictt["Steps"] == "color":
         promt2 = '''
         what color of clothes is this(you only can answer the following colors)
@@ -327,7 +333,7 @@ while True:
         10	Gray
         11	Brown
         (answer format)
-        answer: the guy is wearing **color** t-shirt
+        the guy is wearing **color** t-shirt
         '''
         promt = promt2
         image_url = f"http://192.168.50.147:8888{'/uploads/GSPR_color.jpg'}"
@@ -337,10 +343,10 @@ while True:
         # Decode the image using OpenCV
         img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         # Save the image using OpenCV
-        cv2.imwrite(pathnum+"Robot_view.jpg", img)
+        cv2.imwrite(pathnum + "Robot_view.jpg", img)
         print("Image saved successfully using OpenCV!")
         # Configuration and setup
-        genai.configure(api_key='AIzaSyBj9nF9Lq9TanhVMyue4qn_xbKLxyCnn2k')  # Replace with your actual API key
+        genai.configure(api_key='AIzaSyBdTRu-rcBKbf86gjiMNtezBu1dEuxrWyE')  # Replace with your actual API key
         model = genai.GenerativeModel("gemini-2.0-flash")
         path_sample = "C:/Users/rayso/Desktop/python/Robot_view.jpg"  # Use raw string to handle backslashes
         # Prepare the prompt template
@@ -349,6 +355,7 @@ while True:
         response = model.generate_content([img, sample_txt])
         file_data_string = response.text
         print(file_data_string)
+        file_data_string=file_data_string.replace("**","")
         questions = {
             "Question1": "None",
             "Question2": "None",
@@ -362,3 +369,4 @@ while True:
         response = requests.post(api_url, json=questions)
         result = response.json()
         print(result)
+        time.sleep(2)
