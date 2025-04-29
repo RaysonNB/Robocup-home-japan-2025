@@ -8,18 +8,18 @@ Ro = RoboticController()
 Ro.open_robotic_arm("COM4", id_list, Dy)
 
 grip_id = arm_id_list[-1]
-target_angle = 30
+target_angle = 90
 dt = 0.1
-Dy.‎goal_absolute_direction(grip_id, angle)
-while True:
+Dy.‎goal_absolute_direction(grip_id, target_angle)
+while target_angle > 5:
+
     dangle = abs(angle - Dy.‎present_position(grip_id))
     time.sleep(dt)
     angle = Dy.‎present_position(grip_id)
     angle_speed = dangle / dt
     print(angle_speed)
 
-    if abs(angle - target_angle) < 3.5:
-        print("Target Reached!")
-        
+    target_angle -= 5
+    Dy.‎goal_absolute_direction(grip_id, target_angle)
 
 Dy.‎goal_absolute_direction(grip_id, 90)
