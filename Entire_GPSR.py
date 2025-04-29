@@ -401,7 +401,7 @@ def confirm_recording(original_text):
 
 
 def check_item(name):
-    corrected = "starting point"
+    corrected = "entrance"
     cnt = 0
     if name in locations:
         corrected = name
@@ -602,7 +602,7 @@ locations = {
     # Locations and special points
     "entrance": [3.809, 2.981, 3.053],
     "exit": [6.796, 3.083, 0],
-    "host": [-0.967, -0.013, -1.709],
+    "instruction point": [-0.967, -0.013, -1.709],
     "dining room": [-0.397, 0.297, 0],
     "living room": [3.364, 2.991, 1.436],
     "bedroom": [0.028, 3.514, 3.139],
@@ -688,59 +688,39 @@ if __name__ == "__main__":
     # Step 9 send image response text
     # step 10 get the image response
     '''
-    walk_to("starting point")
-
-    speak("please say start, then I will go to the host point")
-
-
+    walk_to("entrance")
+    speak("please say start, then I will go to the instruction point")
     while True:
         if "start" in s or "stop" in s:
             break'''
+
     step = "none"
     confirm_command = 0
-    walk_to("host")
-
-    command_list = [
-        "Take a task item from the trash bin and bring it to Tom in the living room",
-        "Go to the bedroom then locate a kitchen item and fetch it and put it on the left Kachaka shelf",
-        "Follow the person giving the V sign at the trash bin",
-        "Tell me how many people raising their right arm are in the bedroom",
-        "Tell me what is the largest food item on the right Kachaka shelf",
-        "Tell me how many kitchen items there are on the right Kachaka shelf",
-        "Say what day today is to the person raising their right arm in the living room",
-        "Give me a cup from the right tray",
-        "Meet Basil in the living room and answer a question",
-        "Tell me how tall is the person at the bed",
-        "Tell me how old is the person at the bed",
-        "Tell me t-shirt color is the person at the bed",
-        "Tell me the name is the person at the bed",
-        "Tell what the weather is like today to the person raising their right arm in the living room",
-        "Navigate to the bedroom then find a food item and grasp it and give it to the person crossing one's arms in the study room",
-        "Navigate to the bedroom then locate a light bulb and grasp it and bring it to me",
-        "Lead Sophia from the shelf to the right Kachaka shelf",
-        "Tell me how many task items there are on the right tray",
-        "Lead the person pointing to the left from the right Kachaka station to the bed",
-        "Follow the squatting person at the pen holder",
-        "Grasp a noodles from the trash bin and put it on the container",
-        "Follow Sophia from the left tray to the dining room",
-        "Tell me how many kitchen items there are on the trash bin",
-        "Tell me the age of the person standing in the living room",
-        "Tell me how tall of the person standing in the living room",
-        "Tell me the name of the person standing in the living room",
-        "Tell me the shirt color of the person standing in the living room",
-        "Give me a light bulb from the trash bin",
-        "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
-        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-        "Give me a cookies from the tall table",
-        "Tell me how many people in the dining room are wearing white t-shirt",
-        "Meet Basil at the tall table then look for them in the study room",
-        "Tell me how many people crossing one's arms are in the study room",
-        "Tell me what is the thinnest object on the shelf"
-    ]
+    walk_to("instruction point")
+    command_list = [""
+                    "Tell me how many task items there are on the right tray",
+                    "Lead the person pointing to the left from the right Kachaka station to the bed",
+                    "Follow the squatting person at the pen holder",
+                    "Grasp a noodles from the trash bin and put it on the container",
+                    "Follow Sophia from the left tray to the dining room",
+                    "Tell me how many kitchen items there are on the trash bin",
+                    "Tell me the age of the person standing in the living room",
+                    "Tell me how tall of the person standing in the living room",
+                    "Tell me the name of the person standing in the living room",
+                    "Tell me the shirt color of the person standing in the living room"
+                    "Give me a light bulb from the trash bin",
+                    "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
+                    "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
+                    "Give me a cookies from the tall table",
+                    "Tell me how many people in the dining room are wearing white t-shirt",
+                    "Meet Basil at the tall table then look for them in the study room",
+                    "Tell me how many people crossing one's arms are in the study room",
+                    "Tell me what is the thinnest object on the shelf"
+                    ]
     for i in range(0, len(command_list)):
         dining_room_action=0
         qr_code_detector = cv2.QRCodeDetector()
-        #data = ""
+        data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = command_list[i]
         while True:
@@ -831,27 +811,39 @@ if __name__ == "__main__":
         nav1_skip_cnt = 0
         output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
         uuu = data.lower()
+        # room back up
+        if "ROOM1" not in liyt and "$ROOM1" not in liyt and ("PLACE1" in liyt or "$PLACE1" in liyt):
+            # Bedroom: bed
+            # Dining room: dining table, couch
+            # Studying room: shelf, left chair, right chair, left kachaka station, right kachaka station
+            # Living room: counter, left tray, right tray, pen holder, container, left kachaka shelf, right kachaka shelf, low table, tall table, trash bin
+            name_position = "$PLACE1"
+            if "$PLACE1" not in liyt:
+                name_position = "PLACE1"
+            if name_position in liyt:
+                ggg = liyt[name_position].lower()
+                if ggg == "bed" or ggg=="exit":
+                    liyt["$ROOM1"] = "bedroom"
+                elif ggg == "dining table" or ggg == "couch" or ggg=="entrance":
+                    liyt["$ROOM1"] = "dining room"
+                elif ggg in ["shelf", "left chair", "right chair", "left kachaka station",
+                                             "right kachaka station"]:
+                    liyt["$ROOM1"] = "studying room"
+                elif ggg in ["counter", "left tray", "right tray", "pen holder", "container",
+                                             "left kachaka shelf", "right kachaka shelf", "low table", "tall table",
+                                             "trash bin"]:
+                    liyt["$ROOM1"] = "living room"
         real_name = "guest"
-        if "chikako" in uuu:
-            real_name = "chikako"
-        elif "yoshimura" in uuu:
-            real_name = "yoshimura"
-        elif "basil" in uuu:
-            real_name = "basil"
-        elif "angel" in uuu:
-            real_name = "angel"
-        elif "jack" in uuu:
-            real_name = "jack"
-        elif "andrew" in uuu:
-            real_name = "andrew"
-        elif "sophia" in uuu:
-            real_name = "sophia"
-        elif "mike" in uuu:
-            real_name = "mike"
-        elif "leo" in uuu:
-            real_name = "leo"
-        elif "tom" in uuu:
-            real_name = "tom"
+        if "chikako" in uuu: real_name = "chikako"
+        elif "yoshimura" in uuu: real_name = "yoshimura"
+        elif "basil" in uuu: real_name = "basil"
+        elif "angel" in uuu: real_name = "angel"
+        elif "jack" in uuu: real_name = "jack"
+        elif "andrew" in uuu: real_name = "andrew"
+        elif "sophia" in uuu: real_name = "sophia"
+        elif "mike" in uuu: real_name = "mike"
+        elif "leo" in uuu: real_name = "leo"
+        elif "tom" in uuu: real_name = "tom"
         v2_turn_skip=0
         while not rospy.is_shutdown():
             # voice check
@@ -866,14 +858,9 @@ if __name__ == "__main__":
                 print(s)
                 pre_s = s
             if _frame2 is None:
-                print("no frame2")
-                continue
+                print("no frame")
             if _depth2 is None:
-                print("no depth2")
-                continue
-            if _frame1 is None:
-                print("no frame1")
-                continue
+                print("no depth")
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
             catch_image = _frame1.copy()
@@ -928,7 +915,7 @@ if __name__ == "__main__":
                     step_action = 2
                 if step_action == 2:
                     if " me " in user_input:
-                        walk_to("host")
+                        walk_to("instruction point")
                     else:
                         name_position = "$ROOM2"
                         if "$ROOM2" not in liyt:
@@ -944,14 +931,14 @@ if __name__ == "__main__":
                     "vision" in command_type and "2" in command_type and "enume" in command_type)):
                 # Move
                 if step_action == 0:
-                    liyt = Q2
-                    if ("2" in command_type):
-                        name_position = "$ROOM1"
-                        if "$ROOM1" not in liyt:
-                            name_position = "ROOM1"
-                        if name_position in liyt:
-                            walk_to1(liyt[name_position])
-                    else:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
+                    if ("1" in command_type):
                         name_position = "$PLACE1"
                         if "$PLACE1" not in liyt:
                             name_position = "PLACE1"
@@ -1009,7 +996,13 @@ if __name__ == "__main__":
             elif (("vision (descridption)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "descri" in command_type))):
                 if step_action == 0:
-                    liyt = Q2
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
@@ -1062,7 +1055,13 @@ if __name__ == "__main__":
             elif ("vision (descridption)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
-                    liyt = Q2
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
@@ -1267,6 +1266,16 @@ if __name__ == "__main__":
                             action1 = 1
                             step_action = 2
                     elif "name" in user_input:
+                        # jack, check, track
+                        # aaron, ellen, evan
+                        # angel
+                        # adam, ada, aiden
+                        # Vanessa, lisa, Felicia
+                        # chris
+                        # william
+                        # max, mix
+                        # hunter
+                        # olivia
                         if step_speak == 0:
                             # speak("hello")
                             speak("hello guest can u speak your name to me")
@@ -1305,7 +1314,6 @@ if __name__ == "__main__":
             # navigation 1 ***
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1323,7 +1331,7 @@ if __name__ == "__main__":
                         name_position = "POSE/GESTURE"
                     if name_position in liyt:
                         feature = liyt[name_position]
-                    if step == "turn" and dining_room_action == 0:
+                    if step == "turn":
                         move(0, -0.2)
                         nav1_skip_cnt += 1
                         if nav1_skip_cnt >= 250:
@@ -1331,34 +1339,6 @@ if __name__ == "__main__":
                             action = "none"
                             step_action = 3
                             speak("I can't find you I gonna go back to the host")
-                    if step == "turn" and dining_room_action == 1:
-                        move(0, -0.2)
-                        nav1_skip_cnt += 1
-                        if nav1_skip_cnt >= 75:
-                            nav1_skip_cnt = 0
-                            num1, num2, num3 = dining_room_dif["din2"]
-                            chassis.move_to(num1, num2, num3)
-                            while not rospy.is_shutdown():
-                                # 4. Get the chassis status.
-                                code = chassis.status_code
-                                text = chassis.status_text
-                                if code == 3:
-                                    break
-                                if code == 4:
-                                    break
-                            time.sleep(1)
-                            clear_costmaps
-                            dining_room_action=2
-                    if step == "turn" and dining_room_action == 2:
-                        move(0, -0.2)
-                        nav1_skip_cnt += 1
-                        if nav1_skip_cnt >= 75:
-                            nav1_skip_cnt = 0
-                            step = "none"
-                            action = "none"
-                            speak("I can't find you I gonna go back to the host")
-                            dining_room_action=-1
-                            step_action = 3
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
@@ -1544,7 +1524,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1562,7 +1541,7 @@ if __name__ == "__main__":
                         feature = liyt[name_position]
                 if step_action == 1:
                     # walk in front of the guy
-                    if step == "turn" and dining_room_action == 0:
+                    if step == "turn":
                         move(0, -0.2)
                         nav2_skip_cnt = 0
                         if nav2_skip_cnt >= 250:
@@ -1570,34 +1549,6 @@ if __name__ == "__main__":
                             action = "none"
                             step_action = 3
                             speak("I can't find you I gonna go back to the host")
-                    if step == "turn" and dining_room_action == 1:
-                        move(0, -0.2)
-                        nav2_skip_cnt += 1
-                        if nav2_skip_cnt >= 75:
-                            nav2_skip_cnt = 0
-                            num1, num2, num3 = dining_room_dif["din2"]
-                            chassis.move_to(num1, num2, num3)
-                            while not rospy.is_shutdown():
-                                # 4. Get the chassis status.
-                                code = chassis.status_code
-                                text = chassis.status_text
-                                if code == 3:
-                                    break
-                                if code == 4:
-                                    break
-                            time.sleep(1)
-                            clear_costmaps
-                            dining_room_action=2
-                    if step == "turn" and dining_room_action == 2:
-                        move(0, -0.2)
-                        nav2_skip_cnt += 1
-                        if nav2_skip_cnt >= 75:
-                            nav2_skip_cnt = 0
-                            step = "none"
-                            action = "none"
-                            speak("I can't find you I gonna go back to the host")
-                            dining_room_action=-1
-                            step_action = 3
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
@@ -1730,7 +1681,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1777,11 +1727,11 @@ if __name__ == "__main__":
 
                     if "what" in s:
                         if "today" in s:
-                            answer = f"It is 2nd of May"
+                            answer = f"It is {current_month} {day_of_month}"
                         elif "team" in s and "name" in s:
                             answer = "My team's name is FAMBOT"
                         elif "tomorrow" in s:
-                            answer = f"It is 3rd of May"  # Note: you might need to handle month boundaries
+                            answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
                         elif "your" in s and "name" in s:
                             answer = "My name is FAMBOT robot"
                         elif "time" in s:
@@ -1884,7 +1834,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Speech2
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1902,7 +1851,7 @@ if __name__ == "__main__":
                         feature = liyt[name_position]
                 if step_action == 1:
                     # walk in front of the guy
-                    if step == "turn" and dining_room_action == 0:
+                    if step == "turn":
                         move(0, -0.2)
                         speech2_turn_skip += 1
                         if speech2_turn_skip >= 250:
@@ -1910,34 +1859,6 @@ if __name__ == "__main__":
                             step = "none"
                             action = "none"
                             speak("I can't find you I gonna go back to the host")
-                            step_action = 2
-                    if step == "turn" and dining_room_action == 1:
-                        move(0, -0.2)
-                        speech2_turn_skip += 1
-                        if speech2_turn_skip >= 75:
-                            speech2_turn_skip = 0
-                            num1, num2, num3 = dining_room_dif["din2"]
-                            chassis.move_to(num1, num2, num3)
-                            while not rospy.is_shutdown():
-                                # 4. Get the chassis status.
-                                code = chassis.status_code
-                                text = chassis.status_text
-                                if code == 3:
-                                    break
-                                if code == 4:
-                                    break
-                            time.sleep(1)
-                            clear_costmaps
-                            dining_room_action=2
-                    if step == "turn" and dining_room_action == 2:
-                        move(0, -0.2)
-                        speech2_turn_skip += 1
-                        if speech2_turn_skip >= 75:
-                            speech2_turn_skip = 0
-                            step = "none"
-                            action = "none"
-                            speak("I can't find you I gonna go back to the host")
-                            dining_room_action=-1
                             step_action = 2
                     if step == "confirm":
                         print("imwrited")
@@ -2050,6 +1971,7 @@ if __name__ == "__main__":
                         else:
                             move(0.2, 0)
                     if action == "speak":
+                        action = 1
                         step = "none"
                         action = "none"
                         step_action = 2
@@ -2071,9 +1993,9 @@ if __name__ == "__main__":
                             "something" in user_input and "yourself" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
                     elif "what day today is" in user_input or ("today" in user_input and "day" in user_input):
-                        speak("today is 2 nd May in 2025")
+                        speak("today is 25 th April in 2025")
                     elif "what day tomorrow is" in user_input or ("tomorrow" in user_input and "say" in user_input):
-                        speak("today is 3 rd May in 2025")
+                        speak("today is 26 th April in 2025")
                     elif "where robocup is held this year" in user_input or (
                             "where" in user_input and "robocup" in user_input and "year" in user_input):
                         speak("the robocup 2025 is held in Brazil,Salvador")
@@ -2119,7 +2041,7 @@ if __name__ == "__main__":
             else:
                 speak("I can't do it take the next command please")
                 break
-        walk_to("host")
+        walk_to("instruction point")
         print("***************")
         print("command", i, end=" ")
         speak(final_speak_to_guest)
