@@ -99,149 +99,21 @@ def get_real_xyz(dp, x, y, num):
     real_y = round(y * 2 * d * np.tan(a / 2) / h)
     real_x = round(x * 2 * d * np.tan(b / 2) / w)
     return real_x, real_y, d
-
-
 def callback_voice(msg):
     global s
     s = msg.text
 
-
 def speak(g):
-    os.system(f'espeak "{g}"')
+    os.system(f'espeak -s 165 "{g}"')
     # rospy.loginfo(g)
     print(g)
     time.sleep(0.3)
-
-
-class FollowMe(object):
-    def __init__(self) -> None:
-        self.pre_x, self.pre_z = 0.0, 0.0
-
-    def get_pose_target(self, pose, num):
-        p = []
-        for i in [num]:
-            if pose[i][2] > 0:
-                p.append(pose[i])
-
-        if len(p) == 0:
-            return -1, -1, -1
-        return int(p[0][0]), int(p[0][1]), 1
-
-    def get_real_xyz(self, depth, x: int, y: int) -> Tuple[float, float, float]:
-        if x < 0 or y < 0:
-            return 0, 0, 0
-        a1 = 55.0
-        b1 = 86.0
-        a = a1 * np.pi / 180
-        b = b1 * np.pi / 180
-
-        d = depth[y][x]
-        h, w = depth.shape[:2]
-        if d == 0:
-            for k in range(1, 15, 1):
-                if d == 0 and y - k >= 0:
-                    for j in range(x - k, x + k, 1):
-                        if not (0 <= j < w):
-                            continue
-                        d = depth[y - k][j]
-                        if d > 0:
-                            break
-                if d == 0 and x + k < w:
-                    for i in range(y - k, y + k, 1):
-                        if not (0 <= i < h):
-                            continue
-                        d = depth[i][x + k]
-                        if d > 0:
-                            break
-                if d == 0 and y + k < h:
-                    for j in range(x + k, x - k, -1):
-                        if not (0 <= j < w):
-                            continue
-                        d = depth[y + k][j]
-                        if d > 0:
-                            break
-                if d == 0 and x - k >= 0:
-                    for i in range(y + k, y - k, -1):
-                        if not (0 <= i < h):
-                            continue
-                        d = depth[i][x - k]
-                        if d > 0:
-                            break
-                if d > 0:
-                    break
-        x = x - w // 2
-        y = y - h // 2
-        real_y = y * 2 * d * np.tan(a / 2) / h
-        real_x = x * 2 * d * np.tan(b / 2) / w
-        return real_x, real_y, d
-
-    def calc_linear_x(self, cd: float, td: float) -> float:
-        if cd <= 0:
-            return 0
-        e = cd - td
-        p = 0.0005
-        x = p * e
-        if x > 0:
-            x = min(x, 0.15)
-        if x < 0:
-            x = max(x, -0.15)
-        return x
-
-    def calc_angular_z(self, cx: float, tx: float) -> float:
-        if cx < 0:
-            return 0
-        e = tx - cx
-        p = 0.0025
-        z = p * e
-        if z > 0:
-            z = min(z, 0.4)
-        if z < 0:
-            z = max(z, -0.4)
-        return z
-
-    def calc_cmd_vel(self, image, depth, cx, cy) -> Tuple[float, float]:
-        image = image.copy()
-        depth = depth.copy()
-
-        frame = image
-        if cx == 2000:
-            cur_x, cur_z = 0, 0
-            return cur_x, cur_z, frame, "no"
-
-        print(cx, cy)
-        _, _, d = self.get_real_xyz(depth, cx, cy)
-
-        cur_x = self.calc_linear_x(d, 850)
-        cur_z = self.calc_angular_z(cx, 350)
-
-        dx = cur_x - self.pre_x
-        if dx > 0:
-            dx = min(dx, 0.15)
-        if dx < 0:
-            dx = max(dx, -0.15)
-
-        dz = cur_z - self.pre_z
-        if dz > 0:
-            dz = min(dz, 0.4)
-        if dz < 0:
-            dz = max(dz, -0.4)
-
-        cur_x = self.pre_x + dx
-        cur_z = self.pre_z + dz
-
-        self.pre_x = cur_x
-        self.pre_z = cur_z
-
-        return cur_x, cur_z, frame, "yes"
-
-
 def move(forward_speed: float = 0, turn_speed: float = 0):
     global _cmd_vel
     msg = Twist()
     msg.linear.x = forward_speed
     msg.angular.z = turn_speed
     _cmd_vel.publish(msg)
-
 
 def post_message_request(step, s1, question):
     api_url = "http://192.168.50.147:8888/Fambot"
@@ -255,153 +127,12 @@ def post_message_request(step, s1, question):
     response = requests.post(api_url, json=my_todo, timeout=2.5)
     result = response.json()
     return result
-
-
 def callback_voice(msg):
     global s
     s = msg.text
 
-
-def recognize_speech(duration):
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        audio_data = recognizer.record(source, duration=duration)
-        try:
-            return recognizer.recognize_google(audio_data).lower()
-        except sr.UnknownValueError:
-            return None
-
-
-def confirm_recording(original_text):
-    while True:  # Keep asking until we get a "yes"
-        speak(f"Did you say: {original_text}?")
-        speak("Please answer hello fambot 'yes yes yes' or 'no no no' after the sound")
-        time.sleep(1)
-        playsound("nigga2.mp3")
-        response = recognize_speech(5)
-
-        if response is None:
-            speak("Sorry, I didn't catch that. Let's try again.")
-            continue
-
-        print(f"You responded: {response}")
-
-        if "yes" in response:
-            return True
-        elif "no" in response:
-            return False
-        else:
-            speak("I didn't understand your answer. Please say 'yes' or 'no'.")
-
-
-def get_user_input():
-    while True:
-        # Voice introduction
-        speak("Hi, I am fambot. How can I help you? Speak you command after the")
-        playsound("nigga2.mp3")  # Changed sound file name
-        speak("sound")
-
-        # Countdown
-        time.sleep(0.5)
-        playsound("/home/pcms/catkin_ws/nigga2.mp3")
-
-        user_text = recognize_speech(10)
-
-        if not user_text:
-            error_msg = "Sorry, I couldn't understand. Please try again."
-            print(error_msg)
-            speak(error_msg)
-            continue
-
-        print(f"You said: {user_text}")
-        # speak(f"You said: {user_text}")
-        user_text = user_text.replace("facebook", "fambot")
-        if confirm_recording(user_text):
-            return user_text
-        else:
-            speak("Let's try recording again.")
-
-    return None
-
-
-def ask_question(question):
-    while True:
-        # Voice introduction
-        speak("Dear Guest")
-        speak(question)
-        speak("please speak the entire sentence, for example my name is Fambot")
-        speak("speak after the")
-        playsound("nigga2.mp3")  # Changed sound file name
-        speak("sound")
-
-        # Countdown
-        time.sleep(1)
-        playsound("/home/pcms/catkin_ws/nigga2.mp3")
-
-        user_text = recognize_speech(5)
-
-        if not user_text:
-            error_msg = "Sorry, I couldn't understand. Please try again."
-            print(error_msg)
-            speak(error_msg)
-            continue
-
-        print(f"You said: {user_text}")
-        # speak(f"You said: {user_text}")
-        user_text = user_text.replace("facebook", "fambot")
-        if confirm_recording(user_text):
-            return user_text
-        else:
-            speak("Let's try recording again.")
-
-    return None
-
-
-def find_person(frame, pose):
-    detections = dnn_yolo.forward(frame)[0]["det"]
-    for i, detection in enumerate(detections):
-        # print(detection)
-        x1, y1, x2, y2, score, class_id = map(int, detection)
-        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-        score = detection[4]
-        if class_id == 0 and score >= 0.55:
-            # print(cx,cy,"position bottle")
-            cx = min(cx, 640)
-            cy = min(cy, 480 - 1)
-            k2, kk1, kkkz = get_real_xyz(frame, cx, cy)
-            # print(float(score), class_id)
-            hhh = str(class_id) + " " + str(k2) + " " + str(kk1) + " " + str(kkkz)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
-            # capture
-            # gemini response
-
-    return frame
-
-
-def confirm_recording(original_text):
-    while True:  # Keep asking until we get a "yes"
-        speak(f"Did you say: {original_text}?")
-        speak("Please answer hello fambot 'yes yes yes' or 'no no no' after the sound")
-        time.sleep(1)
-        playsound("nigga2.mp3")
-        response = recognize_speech(5)
-
-        if response is None:
-            speak("Sorry, I didn't catch that. Let's try again.")
-            continue
-
-        print(f"You responded: {response}")
-
-        if "yes" in response:
-            return True
-        elif "no" in response:
-            return False
-        else:
-            speak("I didn't understand your answer.")
-
-
 def check_item(name):
-    corrected = "starting point"
+    corrected = "entrance"
     cnt = 0
     if name in locations:
         corrected = name
@@ -602,7 +333,7 @@ locations = {
     # Locations and special points
     "entrance": [3.809, 2.981, 3.053],
     "exit": [6.796, 3.083, 0],
-    "host": [-0.967, -0.013, -1.709],
+    "instruction point": [-0.967, -0.013, -1.709],
     "dining room": [-0.397, 0.297, 0],
     "living room": [3.364, 2.991, 1.436],
     "bedroom": [0.028, 3.514, 3.139],
@@ -688,20 +419,29 @@ if __name__ == "__main__":
     # Step 9 send image response text
     # step 10 get the image response
     '''
-    walk_to("starting point")
-
-    speak("please say start, then I will go to the host point")
-
-
+    walk_to("entrance")
+    speak("please say start, then I will go to the instruction point")
     while True:
         if "start" in s or "stop" in s:
             break'''
+
     step = "none"
     confirm_command = 0
-    walk_to("host")
-
-    command_list = [""
+    walk_to("instruction point")
+    command_list = [
+                    
+                    
+                    "Tell me the shirt color of the person standing in the living room",
+                    "Give me a light bulb from the trash bin",
+                    "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
+                    "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
+                    "Give me a cookies from the tall table",
+                    "Tell me how many people in the dining room are wearing white t-shirt",
+                    "Meet Basil at the tall table then look for them in the study room",
+                    "Tell me how many people crossing one's arms are in the study room",
+                    "Tell me what is the thinnest object on the shelf",
                     "Tell me how many task items there are on the right tray",
+                    
                     "Lead the person pointing to the left from the right Kachaka station to the bed",
                     "Follow the squatting person at the pen holder",
                     "Grasp a noodles from the trash bin and put it on the container",
@@ -710,15 +450,6 @@ if __name__ == "__main__":
                     "Tell me the age of the person standing in the living room",
                     "Tell me how tall of the person standing in the living room",
                     "Tell me the name of the person standing in the living room",
-                    "Tell me the shirt color of the person standing in the living room"
-                    "Give me a light bulb from the trash bin",
-                    "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
-                    "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-                    "Give me a cookies from the tall table",
-                    "Tell me how many people in the dining room are wearing white t-shirt",
-                    "Meet Basil at the tall table then look for them in the study room",
-                    "Tell me how many people crossing one's arms are in the study room",
-                    "Tell me what is the thinnest object on the shelf"
                     ]
     for i in range(0, len(command_list)):
         dining_room_action=0
@@ -726,26 +457,28 @@ if __name__ == "__main__":
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         data = command_list[i]
+        yn=0
         while True:
-            print("step1")
-            if _frame2 is None: continue
-            code_image = _frame2.copy()
-            data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
-
-            if data:
-                print("QR Code detected:", data)
+            if yn == 1:
                 break
+            while True:
+                print("step1")
+                if _frame2 is None: continue
+                code_image = _frame2.copy()
+                data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
 
-            cv2.imshow("QR Code Scanner", code_image)
+                if data:
+                    print("QR Code detected:", data)
+                    break
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        cv2.destroyAllWindows()
-        data = command_list[i]
-        if "dining" in data:
-            dining_room_action=1
-        # confirm
-        if confirm_command == 0:
+                cv2.imshow("QR Code Scanner", code_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            cv2.destroyAllWindows()
+            data = command_list[i]
+            if "dining" in data:
+                dining_room_action=1
             speak("dear host your command is")
             time.sleep(0.3)
             print("Yout command is **********************")
@@ -754,11 +487,17 @@ if __name__ == "__main__":
             print("********************")
             time.sleep(0.3)
             speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
-            confirm_command = 1
-        while True:
-            if "yes" in s:
-                speak("ok")
-                break
+            while True:
+                if "yes" in s:
+                    speak("ok")
+                    yn=1
+                    break
+                    
+                if "no" in s:
+                    speak("please scan it again")
+                    s=""
+                    break
+                    
         user_input = data
         # post question
         gg = post_message_request("first", user_input, "")  # step
@@ -784,6 +523,7 @@ if __name__ == "__main__":
         Q3 = "I should " + Q3
         Q3 = Q3.replace(" me", " you")
         print("My understanding for command", i)
+        gg = post_message_request("-1", "", "")
         print("************************")
         speak(Q3)
         print("************************")
@@ -795,7 +535,7 @@ if __name__ == "__main__":
         step_action = 0
         # continue
         liyt = Q2
-        gg = post_message_request("-1", "", "")
+        
         pre_s = ""
         name_cnt = "none"
         ageList = ['1', '5', '10', '17', '27', '41', '50', '67']
@@ -814,27 +554,40 @@ if __name__ == "__main__":
         nav1_skip_cnt = 0
         output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
         uuu = data.lower()
+        vd2_depth=99999
+        # room back up
+        if "ROOM1" not in liyt and "$ROOM1" not in liyt and ("PLACE1" in liyt or "$PLACE1" in liyt):
+            # Bedroom: bed
+            # Dining room: dining table, couch
+            # Studying room: shelf, left chair, right chair, left kachaka station, right kachaka station
+            # Living room: counter, left tray, right tray, pen holder, container, left kachaka shelf, right kachaka shelf, low table, tall table, trash bin
+            name_position = "$PLACE1"
+            if "$PLACE1" not in liyt:
+                name_position = "PLACE1"
+            if name_position in liyt:
+                ggg = liyt[name_position].lower()
+                if ggg == "bed" or ggg=="exit":
+                    liyt["$ROOM1"] = "bedroom"
+                elif ggg == "dining table" or ggg == "couch" or ggg=="entrance":
+                    liyt["$ROOM1"] = "dining room"
+                elif ggg in ["shelf", "left chair", "right chair", "left kachaka station",
+                                             "right kachaka station"]:
+                    liyt["$ROOM1"] = "studying room"
+                elif ggg in ["counter", "left tray", "right tray", "pen holder", "container",
+                                             "left kachaka shelf", "right kachaka shelf", "low table", "tall table",
+                                             "trash bin"]:
+                    liyt["$ROOM1"] = "living room"
         real_name = "guest"
-        if "chikako" in uuu:
-            real_name = "chikako"
-        elif "yoshimura" in uuu:
-            real_name = "yoshimura"
-        elif "basil" in uuu:
-            real_name = "basil"
-        elif "angel" in uuu:
-            real_name = "angel"
-        elif "jack" in uuu:
-            real_name = "jack"
-        elif "andrew" in uuu:
-            real_name = "andrew"
-        elif "sophia" in uuu:
-            real_name = "sophia"
-        elif "mike" in uuu:
-            real_name = "mike"
-        elif "leo" in uuu:
-            real_name = "leo"
-        elif "tom" in uuu:
-            real_name = "tom"
+        if "chikako" in uuu: real_name = "chikako"
+        elif "yoshimura" in uuu: real_name = "yoshimura"
+        elif "basil" in uuu: real_name = "basil"
+        elif "angel" in uuu: real_name = "angel"
+        elif "jack" in uuu: real_name = "jack"
+        elif "andrew" in uuu: real_name = "andrew"
+        elif "sophia" in uuu: real_name = "sophia"
+        elif "mike" in uuu: real_name = "mike"
+        elif "leo" in uuu: real_name = "leo"
+        elif "tom" in uuu: real_name = "tom"
         v2_turn_skip=0
         while not rospy.is_shutdown():
             # voice check
@@ -906,7 +659,7 @@ if __name__ == "__main__":
                     step_action = 2
                 if step_action == 2:
                     if " me " in user_input:
-                        walk_to("host")
+                        walk_to("instruction point")
                     else:
                         name_position = "$ROOM2"
                         if "$ROOM2" not in liyt:
@@ -922,14 +675,14 @@ if __name__ == "__main__":
                     "vision" in command_type and "2" in command_type and "enume" in command_type)):
                 # Move
                 if step_action == 0:
-                    liyt = Q2
-                    if ("2" in command_type):
-                        name_position = "$ROOM1"
-                        if "$ROOM1" not in liyt:
-                            name_position = "ROOM1"
-                        if name_position in liyt:
-                            walk_to1(liyt[name_position])
-                    else:
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
+                    if ("1" in command_type):
                         name_position = "$PLACE1"
                         if "$PLACE1" not in liyt:
                             name_position = "PLACE1"
@@ -987,7 +740,13 @@ if __name__ == "__main__":
             elif (("vision (descridption)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "descri" in command_type))):
                 if step_action == 0:
-                    liyt = Q2
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
@@ -1040,7 +799,13 @@ if __name__ == "__main__":
             elif ("vision (descridption)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
-                    liyt = Q2
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to1(liyt[name_position])
+                    step_action = 10
+                if step_action == 10:
                     name_position = "$PLACE1"
                     if "$PLACE1" not in liyt:
                         name_position = "PLACE1"
@@ -1049,8 +814,8 @@ if __name__ == "__main__":
                     step_action = 3
                     skip_cnt_vd = 0
                 if step_action == 3:
-                    action = "turn"
-                    step = "action"
+                    action = "find"
+                    step = "turn"
                 if step == "turn":
                     move(0, -0.2)
                     v2_turn_skip += 1
@@ -1060,13 +825,12 @@ if __name__ == "__main__":
                         action = "none"
                         step_action = 1
                         speak("I can't find you I gonna go back to the host")
-                        step_action = 2
                 if action == "find":
                     code_image = _frame2.copy()
                     detections = dnn_yolo1.forward(code_image)[0]["det"]
                     # clothes_yolo
                     # nearest people
-                    nx = 2000
+                    nx = 3000
                     cx_n, cy_n = 0, 0
                     CX_ER = 99999
                     need_position = 0
@@ -1087,7 +851,9 @@ if __name__ == "__main__":
                             cv2.circle(code_image, (cx, cy), 5, (0, 255, 0), -1)
                             print("people distance", d)
                             CX_ER = 320 - cx
+                            vd2_depth=d
                     if need_position != 0:
+                        step="none"
                         h, w, c = code_image.shape
                         x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
                         e = w // 2 - cx2
@@ -1294,7 +1060,6 @@ if __name__ == "__main__":
             # navigation 1 ***
             elif "navigation1" in command_type or ("navi" in command_type and "1" in command_type):
                 # follow
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1396,6 +1161,7 @@ if __name__ == "__main__":
                                 print("people distance", d)
                                 CX_ER = 320 - cx
                         if need_position != 0:
+                            step="none"
                             h, w, c = code_image.shape
                             x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
                             e = w // 2 - cx2
@@ -1505,7 +1271,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Navigation2
             elif "navigation2" in command_type or ("navi" in command_type and "2" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1606,6 +1371,7 @@ if __name__ == "__main__":
                                 print("people distance", d)
                                 CX_ER = 320 - cx
                         if need_position != 0:
+                            step="none"
                             h, w, c = code_image.shape
                             x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
                             e = w // 2 - cx2
@@ -1645,7 +1411,7 @@ if __name__ == "__main__":
                             move(0.2, 0)
                     if action == "speak":
                         speak("hello dear " + real_name)
-                        speak("can u stand in front of me and I will guild u now")
+                        speak("can u stand in front of me and I will guide u now")
                         action = 1
                         step = "none"
                         step_action = 3
@@ -1663,7 +1429,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1817,7 +1582,6 @@ if __name__ == "__main__":
                     step_action = 100
             # Speech2
             elif "speech2" in command_type or ("spee" in command_type and "2" in command_type):
-                liyt = Q2
                 if step_action == 0:
                     name_position = "$ROOM1"
                     if "$ROOM1" not in liyt:
@@ -1918,6 +1682,7 @@ if __name__ == "__main__":
                                 print("people distance", d)
                                 CX_ER = 320 - cx
                         if need_position != 0:
+                            step="none"
                             h, w, c = code_image.shape
                             x1, y1, x2, y2, cx2, cy2 = map(int, need_position)
                             e = w // 2 - cx2
@@ -2023,9 +1788,9 @@ if __name__ == "__main__":
                     speak("I will go back now bye bye")
                     step_action = 100
             else:
-                speak("I can't do it take the next command please")
+                speak("I can't do it, please take the next command please")
                 break
-        walk_to("host")
+        walk_to("instruction point")
         print("***************")
         print("command", i, end=" ")
         speak(final_speak_to_guest)
