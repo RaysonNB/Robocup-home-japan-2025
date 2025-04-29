@@ -122,7 +122,7 @@ def main():
     Ro = RoboticController()
     arm_id_list = [11, 13, 15, 14, 12, 1, 2]
     Ro.open_robotic_arm("COM4", arm_id_list, Dy)
-  
+    grip_id = arm_id_list[-1]
     chassis = RobotChassis()
     respeaker = Respeaker(enable_espeak_fix=True)
 
