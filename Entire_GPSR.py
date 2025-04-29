@@ -440,7 +440,9 @@ if __name__ == "__main__":
     confirm_command = 0
     walk_to("instruction point")
     command_list = [
-
+        "Say what day today is to the person raising their right arm in the living room",
+        "Give me a cup from the right tray",
+        "Meet Basil in the living room and answer a question",
         "Tell me the shirt color of the person standing in the living room",
         "Give me a light bulb from the trash bin",
         "Fetch a glue gun from the left Kachaka shelf and put it on the left tray",
@@ -451,7 +453,6 @@ if __name__ == "__main__":
         "Tell me how many people crossing one's arms are in the study room",
         "Tell me what is the thinnest object on the shelf",
         "Tell me how many task items there are on the right tray",
-
         "Lead the person pointing to the left from the right Kachaka station to the bed",
         "Follow the squatting person at the pen holder",
         "Grasp a noodles from the trash bin and put it on the container",
