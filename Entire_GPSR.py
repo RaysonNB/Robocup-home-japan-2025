@@ -159,18 +159,19 @@ def walk_to(name):
         speak("going to " + str(name))
         name = name.lower()
         real_name = check_item(name)
-        num1, num2, num3 = locations[real_name]
-        chassis.move_to(num1, num2, num3)
-        while not rospy.is_shutdown():
-            # 4. Get the chassis status.
-            code = chassis.status_code
-            text = chassis.status_text
-            if code == 3:
-                break
-            if code == 4:
-                break
-        time.sleep(1)
-        clear_costmaps
+        if real_name in locations:
+            num1, num2, num3 = locations[real_name]
+            chassis.move_to(num1, num2, num3)
+            while not rospy.is_shutdown():
+                # 4. Get the chassis status.
+                code = chassis.status_code
+                text = chassis.status_text
+                if code == 3:
+                    break
+                if code == 4:
+                    break
+            time.sleep(1)
+            clear_costmaps
 
 
 class FollowMe(object):
@@ -371,18 +372,19 @@ def walk_to1(name):
         speak("going to " + str(name))
         name = name.lower()
         real_name = check_item(name)
-        num1, num2, num3 = cout_location[real_name]
-        chassis.move_to(num1, num2, num3)
-        while not rospy.is_shutdown():
-            # 4. Get the chassis status.
-            code = chassis.status_code
-            text = chassis.status_text
-            if code == 3:
-                break
-            if code == 4:
-                break
-        time.sleep(1)
-        clear_costmaps
+        if real_name in cout_location:
+            num1, num2, num3 = cout_location[real_name]
+            chassis.move_to(num1, num2, num3)
+            while not rospy.is_shutdown():
+                # 4. Get the chassis status.
+                code = chassis.status_code
+                text = chassis.status_text
+                if code == 3:
+                    break
+                if code == 4:
+                    break
+            time.sleep(1)
+            clear_costmaps
 
 
 if __name__ == "__main__":
@@ -424,6 +426,7 @@ if __name__ == "__main__":
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
+    robot_height=1000
     # step_action
     # add action for all code
     # Step 0 first send
@@ -441,8 +444,7 @@ if __name__ == "__main__":
     confirm_command = 0
     walk_to("instruction point")
     command_list = [
-        "Say what day today is to the person raising their right arm in the dining room",
-        "Give me a cup from the right tray",
+        
         "Meet Basil in the dining room and answer a question",
         "Tell me the shirt color of the person standing in the living room",
         "what color of t-shirt Jack is wearing in the dining room",
@@ -463,6 +465,8 @@ if __name__ == "__main__":
         "Tell me the age of the person standing in the living room",
         "Tell me how tall of the person standing in the living room",
         "Tell me the name of the person standing in the living room",
+        "Say what day today is to the person raising their right arm in the dining room",
+        "Give me a cup from the right tray",
     ]
     for i in range(0, len(command_list)):
         dining_room_action = 0
@@ -523,7 +527,7 @@ if __name__ == "__main__":
             dictt = json.loads(response_data)
             if dictt["Steps"] == 1:
                 break
-            time.sleep(2)
+            time.sleep(3)
         Q1 = dictt["Question1"]
         Q2 = dictt["Question2"]
         Q3 = dictt["Question3"]
@@ -908,6 +912,7 @@ if __name__ == "__main__":
                         ay = 0
                         A = []
                         skip_cnt_vd += 1
+                        time.sleep(0.1)
                         if len(poses) > 0:
                             YN = -1
                             a_num = 5
@@ -924,14 +929,14 @@ if __name__ == "__main__":
                                             yu += 1
                                 if yu >= 1:
                                     break
-                        if skip_cnt_vd >= 500:
+                        if skip_cnt_vd >= 250:
                             step_action = 2
                             speak("I can't see the guy I gonna go now")
                         if len(A) != 0 and yu >= 1:
                             cv2.circle(code_image, (A[0], A[1]), 3, (0, 255, 0), -1)
                             target_y = ay
-                            print("your height is", (1000 - target_y + 330) / 10.0)
-                            final_height = (1000 - target_y + 330) / 10.0
+                            print("your height is", (robot_height - target_y + 330) / 10.0)
+                            final_height = (robot_height - target_y + 330) / 10.0
                             step_action = 2
                             final_speak_to_guest = "the guys height is " + str(final_height) + " cm"
                     if "age" in user_input or "old" in user_input:
@@ -969,8 +974,9 @@ if __name__ == "__main__":
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
+                        time.sleep(0.1)
                         skip_cnt_vd += 1
-                        if skip_cnt_vd >= 500:
+                        if skip_cnt_vd >= 250:
                             step_action = 2
                             speak("I can't see the guy I gonna go now")
                         for i, detection in enumerate(detections):
@@ -1057,9 +1063,10 @@ if __name__ == "__main__":
                             playsound("nigga2.mp3")
                             step_speak = 1
                         if step_speak == 1:
+                            time.sleep(0.1)
                             skip_cnt_vd += 1
                             s = s.lower()
-                            if skip_cnt_vd >= 500:
+                            if skip_cnt_vd >= 250:
                                 step_action = 2
                                 speak("I can't hear you I gonna go now")
                                 print(skip_cnt_vd)
@@ -1592,14 +1599,14 @@ if __name__ == "__main__":
                     current_month = now1.strftime("%B")  # Full month name
                     current_day_name = now1.strftime("%A")  # Full weekday name
                     day_of_month = now1.strftime("%d")
-
+                    answer="none"
                     if "what" in s:
                         if "today" in s:
-                            answer = f"It is {current_month} {day_of_month}"
+                            answer = f"It is 2 nd of May"
                         elif "team" in s and "name" in s:
                             answer = "My team's name is FAMBOT"
                         elif "tomorrow" in s:
-                            answer = f"It is {current_month} {day_of_month + 1}"  # Note: you might need to handle month boundaries
+                            answer = f"It is 3 rd of May"  # Note: you might need to handle month boundaries
                         elif "your" in s and "name" in s:
                             answer = "My name is FAMBOT robot"
                         elif "time" in s:
@@ -1669,16 +1676,16 @@ if __name__ == "__main__":
 
                     else:
                         answer = "none"
-
+                    time.sleep(0.1)
                     none_cnt += 1
                     if failed_cnt > 5:
                         speak("I can't get your question, I gonna go back now")
                         step_action = 4
-                    if answer == "none" and none_cnt >= 500 and s != pre_s:
+                    if answer == "none" and none_cnt >= 500:
                         speak("can u please speak it again")
                         none_cnt = 0
                         failed_cnt += 1
-                    else:
+                    elif answer != "none":
                         print("***************")
                         speak(answer)
                         print("***************")
