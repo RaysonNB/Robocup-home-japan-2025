@@ -27,10 +27,11 @@ while target_angle > 5:
     angle_speed = dangle / dt
     print(angle_speed)
 
-    target_angle -= 2
+    target_angle = angle - 5
     Dy.‎goal_absolute_direction(grip_id, target_angle)
 
     if angle_speed < 8.0:
         print(f"Stop at {Dy.‎present_position(grip_id)}")
+        break
 
 Dy.‎goal_absolute_direction(grip_id, 90)
