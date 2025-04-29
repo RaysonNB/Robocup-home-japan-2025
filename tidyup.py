@@ -34,14 +34,13 @@ PROMPT = """
 # Instruction
 Analyze the input image. Detect distinct objects and try your best to classify them using the `Object List` below. 
 If an object isn't listed, use category `Unknown`, whatever it is. Be careful not to leave any items behide
-You **Must** output *only* a JSON list containing objects with keys `"id"`, `"object"` and `"category"`. 
+You **Must** output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
 If there is no object, please output an empty json list ```json[]```
 
 
 # Object List
 | ID | Object        | Category     |
 |----|---------------|--------------|
-| 0  | Bottled Drink | Food         |
 | 1  | Noodles       | Food         |
 | 2  | Cookies       | Food         |
 | 3  | Potato Chips  | Food         |
@@ -58,9 +57,9 @@ If there is no object, please output an empty json list ```json[]```
 # Example Output
 ```json
 [
-  {"id": 7, "object": "Dice", "category": "Task Item"},
-  {"id": 2, "object": "Cookies", "category": "Food"},
-  {"id": -1, "object": "Pen", "category": "Unknown"}
+  {"object": "Dice", "category": "Task Item"},
+  {"object": "Cookies", "category": "Food"},
+  {"object": "Pen", "category": "Unknown"}
 ]
 ```
 """
@@ -222,14 +221,11 @@ def main():
             logger.debug(a_object)
             respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
             logger.info("**OPEN_ARM")
-            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 90, 0, 0, Dy)
+            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
             time.sleep(5)
 
             logger.info("**CLOSE_ARM")
-            if int(a_object["id"]) == 0:
-                Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 30, 0, 0, Dy)
-            else:
-                Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 10, 0, 0, Dy)
+            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 35, 0, Dy)
 
             respeaker.say(a_object["category"])
             if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
@@ -239,7 +235,7 @@ def main():
             
             respeaker.say("Putting Object")
             logger.info("**OPEN_ARM")
-            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 90, 0, 0, Dy)
+            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
             time.sleep(1)
 
             walk_to(TABLE_P)
