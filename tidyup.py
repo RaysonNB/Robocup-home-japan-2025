@@ -10,6 +10,12 @@ from LemonEngine.hardwares.respeaker import Respeaker
 from LemonEngine.hardwares.chassis import Chassis
 from RobotChassis import RobotChassis
 
+from dynamixel_control import DynamixelController
+from robotic_arm_control import RoboticController
+
+Dy = DynamixelController()
+Ro = RoboticController()
+
 # TABLE_P = (3.498, 3.339, -1.664)
 # FOOD_POINT = (6.34, 3.07, 1.5)
 # TASK_POINT = (5.13, 2.90, 1.5)
@@ -27,14 +33,15 @@ KITCHEN_POINT = (1.638, -0.231, -0.910)
 PROMPT = """
 # Instruction
 Analyze the input image. Detect distinct objects and try your best to classify them using the `Object List` below. 
-If an object isn't listed, use category `Unknown`. Be careful not to leave any items behide
-You Must output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
-If no object here, please output a empty json list ```json[]```
+If an object isn't listed, use category `Unknown`, whatever it is. Be careful not to leave any items behide
+You **Must** output *only* a JSON list containing objects with keys `"id"`, `"object"` and `"category"`. 
+If there is no object, please output an empty json list ```json[]```
 
 
 # Object List
 | ID | Object        | Category     |
 |----|---------------|--------------|
+| 0  | Bottled Drink | Food         |
 | 1  | Noodles       | Food         |
 | 2  | Cookies       | Food         |
 | 3  | Potato Chips  | Food         |
@@ -51,9 +58,9 @@ If no object here, please output a empty json list ```json[]```
 # Example Output
 ```json
 [
-  {"object": "Dice", "category": "Task Item"},
-  {"object": "Cookies", "category": "Food"},
-  {"object": "Pen", "category": "Unknown"}
+  {"id": 7, "object": "Dice", "category": "Task Item"},
+  {"id": 2, "object": "Cookies", "category": "Food"},
+  {"id": -1, "object": "Pen", "category": "Unknown"}
 ]
 ```
 """
@@ -109,13 +116,13 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
     cmd_vel.publish(msg)
 
 
-
-
-
 def main():
     clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     
-    
+    Dy = DynamixelController()
+    Ro = RoboticController()
+    arm_id_list = [11, 13, 15, 14, 12, 1, 2]
+  
     chassis = RobotChassis()
     respeaker = Respeaker(enable_espeak_fix=True)
 
@@ -175,7 +182,6 @@ def main():
                 json_object = json.loads(json_string)
                 return json_object
 
-
     ##################################
     
     # while not rospy.is_shutdown():
@@ -192,7 +198,6 @@ def main():
     #         for i in range(10):
     #             move(0.25, 0)
     #             time.sleep(0.1)
-            
     #         move(0, 0)
     #         break
 
@@ -214,11 +219,17 @@ def main():
         
         respeaker.say("I see")
         for a_object in json_object[:3]:
-            print(a_object)
+            logger.debug(a_object)
             respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
-            print("**OPEN_ARM")
+            logger.info("**OPEN_ARM")
+            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 90, 0, 0, Dy)
             time.sleep(5)
-            print("**CLOSE_ARM")
+
+            logger.info("**CLOSE_ARM")
+            if int(a_object["id"]) == 0:
+                Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 30, 0, 0, Dy)
+            else:
+                Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 10, 0, 0, Dy)
 
             respeaker.say(a_object["category"])
             if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
@@ -227,8 +238,9 @@ def main():
             if a_object["category"].lower() == "food":        walk_to(FOOD_POINT)
             
             respeaker.say("Putting Object")
-            print("**OPEN_ARM")
-            time.sleep(5)
+            logger.info("**OPEN_ARM")
+            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 90, 0, 0, Dy)
+            time.sleep(1)
 
             walk_to(TABLE_P)
     
