@@ -226,7 +226,25 @@ def main():
             time.sleep(5)
 
             logger.info("**CLOSE_ARM")
-            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 35, 0, Dy)
+            respeaker.say("I am closing my arm")
+            angle = Dy.‎present_position(grip_id)
+            while target_angle > 5:
+            
+                dangle = abs(angle - Dy.‎present_position(grip_id))
+                time.sleep(dt)
+                angle = Dy.‎present_position(grip_id)
+                angle_speed = dangle / dt
+                logger.debug(angle, angle_speed)
+            
+                target_angle = angle - 5
+                Dy.‎goal_absolute_direction(grip_id, target_angle)
+            
+                if angle_speed < 8.0:
+                    angle = Dy.‎present_position(grip_id)
+                    print(f"Stop at {angle}")
+                    Dy.‎goal_absolute_direction(grip_id, angle)
+                    break
+
 
             respeaker.say(a_object["category"])
             if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
