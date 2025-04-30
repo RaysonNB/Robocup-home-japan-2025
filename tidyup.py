@@ -13,9 +13,6 @@ from RobotChassis import RobotChassis
 from dynamixel_control import DynamixelController
 from robotic_arm_control import RoboticController
 
-Dy = DynamixelController()
-Ro = RoboticController()
-
 # TABLE_P = (3.498, 3.339, -1.664)
 # FOOD_POINT = (6.34, 3.07, 1.5)
 # TASK_POINT = (5.13, 2.90, 1.5)
@@ -33,9 +30,9 @@ KITCHEN_POINT = (1.638, -0.231, -0.910)
 PROMPT = """
 # Instruction
 Analyze the input image. Detect distinct objects and try your best to classify them using the `Object List` below. 
-If an object isn't listed, use category `Unknown`, whatever it is. Be careful not to leave any items behide
-You **Must** output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
-If there is no object, please output an empty json list ```json[]```
+If an object isn't listed, use category `Unknown`. Be careful not to leave any items behide
+You Must output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
+If no object here, please output a empty json list ```json[]```
 
 
 # Object List
@@ -114,17 +111,17 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
     msg.angular.z = turn_speed
     cmd_vel.publish(msg)
 
-
 def main():
     clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
     
-    Dy = DynamixelController()
-    Ro = RoboticController()
-    arm_id_list = [11, 13, 15, 14, 12, 1, 2]
-    Ro.open_robotic_arm("COM4", arm_id_list, Dy)
-    grip_id = arm_id_list[-1]
+    
     chassis = RobotChassis()
     respeaker = Respeaker(enable_espeak_fix=True)
+    id_list = [11, 13, 15, 14, 12, 1, 2]
+
+    Dy = DynamixelController()
+    Ro = RoboticController()
+    Ro.open_robotic_arm("/dev/arm", id_list, Dy)
 
     # navigator = Navigator()
     cam1 = Camera("/camera/color/image_raw", "bgr8")
@@ -182,6 +179,39 @@ def main():
                 json_object = json.loads(json_string)
                 return json_object
 
+    def close_grip(grip_id):
+        logger.info("Start Closing Grip")
+        Dy.profile_velocity(grip_id, 20)
+        final_angle = 0
+        dt = 0.2
+        i = 0
+        while target_angle > 5:
+            
+            i += 1
+            angle = Dy.present_position(grip_id)
+            dangle = abs( last_angle - Dy.present_position(grip_id) )
+            time.sleep(dt)
+            last_angle = angle
+
+            angle = Dy.present_position(grip_id)
+            angle_speed = dangle / dt
+            logger.debug(f"{angle}, {last_angle}, {angle_speed}, {target_angle}, {i}")
+
+            target_angle = angle - 10
+            Dy.goal_absolute_direction(grip_id, target_angle)
+
+            if angle_speed <= 20.0 and i > 3:
+            # if False:
+                logger.debug(f"Stop at {Dy.present_position(grip_id)}")
+                final_angle = Dy.present_position(grip_id) + 4
+                Dy.goal_absolute_direction(grip_id, Dy.present_position(grip_id))
+                break
+
+        time.sleep(1)
+        Ro.go_to_real_xyz_alpha(id_list, [0, 250, 150], -25, 0, final_angle, 0, Dy)
+
+
+
     ##################################
     
     # while not rospy.is_shutdown():
@@ -198,6 +228,7 @@ def main():
     #         for i in range(10):
     #             move(0.25, 0)
     #             time.sleep(0.1)
+            
     #         move(0, 0)
     #         break
 
@@ -219,32 +250,17 @@ def main():
         
         respeaker.say("I see")
         for a_object in json_object[:3]:
-            logger.debug(a_object)
-            respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
-            logger.info("**OPEN_ARM")
-            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
+            print(a_object)
+
+            respeaker.say(f"Please help me take the {a_object['object']} on the table")
             time.sleep(5)
+            respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
+            print("**OPEN_ARM")
+            Ro.go_to_real_xyz_alpha(id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
+            time.sleep(10)
 
-            logger.info("**CLOSE_ARM")
-            respeaker.say("I am closing my arm")
-            angle = Dy.‎present_position(grip_id)
-            while target_angle > 5:
-            
-                dangle = abs(angle - Dy.‎present_position(grip_id))
-                time.sleep(dt)
-                angle = Dy.‎present_position(grip_id)
-                angle_speed = dangle / dt
-                logger.debug(angle, angle_speed)
-            
-                target_angle = angle - 5
-                Dy.‎goal_absolute_direction(grip_id, target_angle)
-            
-                if angle_speed < 8.0:
-                    angle = Dy.‎present_position(grip_id)
-                    print(f"Stop at {angle}")
-                    Dy.‎goal_absolute_direction(grip_id, angle)
-                    break
-
+            print("**CLOSE_ARM")
+            close_grip(id_list[-1])
 
             respeaker.say(a_object["category"])
             if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
@@ -253,9 +269,9 @@ def main():
             if a_object["category"].lower() == "food":        walk_to(FOOD_POINT)
             
             respeaker.say("Putting Object")
-            logger.info("**OPEN_ARM")
-            Ro.go_to_real_xyz_alpha(arm_id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
-            time.sleep(1)
+            print("**OPEN_ARM")
+            time.sleep(5)
+            Ro.go_to_real_xyz_alpha(id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
 
             walk_to(TABLE_P)
     
