@@ -67,11 +67,11 @@ def main():
 
     # navigate
     clear_costmaps
-    walk_to([])
+    walk_to([1.577, 0.142, -3.119])
     clear_costmaps
-    walk_to([])
+    walk_to([-1.271, 0.224, 1.571])
     clear_costmaps
-    walk_to([])
+    walk_to([-2.709, 1.147, 0.000])
 
 
 if __name__ == '__main__':
