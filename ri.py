@@ -38,7 +38,6 @@ def main():
                 break
             if code == 4:
                 logger.error("Fail to get a plan")
-                respeaker.say("Fail to get a plan")
                 clear_costmaps
                 chassis.move_to(*point)
         return
