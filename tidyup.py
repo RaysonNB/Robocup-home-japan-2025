@@ -29,7 +29,7 @@ KITCHEN_POINT = (1.638, -0.231, -0.910)
 
 PROMPT = """
 # Instruction
-Analyze the input image. Detect distinct objects and try your best to classify them using the `Object List` below. 
+Analyze the input image. Detect distinct objects on the table and try your best to classify them using the `Object List` below. 
 If an object isn't listed, use category `Unknown`. Be careful not to leave any items behide
 You Must output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
 If no object here, please output a empty json list ```json[]```
@@ -41,15 +41,23 @@ If no object here, please output a empty json list ```json[]```
 | 1  | Noodles       | Food         |
 | 2  | Cookies       | Food         |
 | 3  | Potato Chips  | Food         |
+| 4  | Caramel Corn  | Food         |
 | 4  | Detergent     | Kitchen Item |
 | 5  | Cup           | Kitchen Item |
+| 7  | Sponge        | Kitchen Item |
 | 6  | Lunch Box     | Kitchen Item |
 | 7  | Dice          | Task Item    |
 | 8  | Light Bulb    | Task Item    |
-| 9  | Block         | Task Item    |
+| 9  | Glue Gun      | Task Item    |
+| 10 | Phone Stand   | Task Item    |
 
-* Note: The `Light Bulb` will be packed in a box
 * Furnitures (i.e. Table, Chair) is not an object
+*  The `Light Bulb` will be packed in a box
+* `Lunch Box` is a small, pink square container with a white lid featuring Piglet and hearts.
+* `Caramel Corn` is a blue bag of Tohato Salty Caramel Corn snack mix.
+* `Detergent` is a white bottle of Japanese cream cleanser with an orange scent.
+* `Cup` is a blue plastic mug with a handle, decorated with characters from SpongeBob SquarePants.
+* `Phone Stand` is a brown plastic cup designed with a bear face and ears.
 
 # Example Output
 ```json
