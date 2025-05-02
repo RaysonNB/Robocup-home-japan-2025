@@ -47,9 +47,9 @@ If no object here, please output a empty json list ```json[]```
 | 7  | Sponge        | Kitchen Item |
 | 6  | Lunch Box     | Kitchen Item |
 | 7  | Dice          | Task Item    |
-| 8  | Light Bulb    | Task Item    |
-| 9  | Glue Gun      | Task Item    |
-| 10 | Phone Stand   | Task Item    |
+| 8  | Light Bulb     | Task Item    |
+| 9  | Glue Gun       | Task Item    |
+| 10 | Phone Stand    | Task Item    |
 
 * Furnitures (i.e. Table, Chair) is not an object
 *  The `Light Bulb` will be packed in a box
@@ -262,13 +262,15 @@ def main():
 
             respeaker.say(f"Please help me take the {a_object['object']} on the table")
             time.sleep(5)
-            respeaker.say("Help me put the " + a_object["object"] + "on my robot arm")
+            respeaker.say("Help me put the " + a_object["object"] + "on my robot arm and wait for the gripper close")
             print("**OPEN_ARM")
             Ro.go_to_real_xyz_alpha(id_list, [0, 300, 150], 0, 0, 90, 0, Dy)
             time.sleep(10)
 
             print("**CLOSE_ARM")
             close_grip(id_list[-1])
+            respeaker.say("Thank you")
+            time.sleep(5)
 
             respeaker.say(a_object["category"])
             if a_object["category"].lower() == "unknown":        walk_to(UNKNOWN_POINT)            
