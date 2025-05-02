@@ -107,7 +107,7 @@ def callback_voice(msg):
 
 
 def speak(g):
-    print("[robot say]:",end=" ") 
+    print("[robot say]:", end=" ")
     os.system(f'espeak -s 165 "{g}"')
     # rospy.loginfo(g)
     print(g)
@@ -123,7 +123,7 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
 
 
 def post_message_request(step, s1, question):
-    api_url = "http://192.168.50.147:8888/Fambot"
+    api_url = "http://172.20.10.5:8888/Fambot"
     my_todo = {"Question1": "None",
                "Question2": "None",
                "Question3": "None",
@@ -156,7 +156,7 @@ clear_costmaps = rospy.ServiceProxy("/move_base/clear_costmaps", Empty)
 
 def walk_to(name):
     if "none" not in name or "unknow" in name:
-        
+
         name = name.lower()
         real_name = check_item(name)
         if real_name in locations:
@@ -371,7 +371,7 @@ dining_room_dif = {
 # answer
 def walk_to1(name):
     if "none" not in name or "unknow" in name:
-        
+
         name = name.lower()
         real_name = check_item(name)
         if real_name in cout_location:
@@ -430,7 +430,7 @@ if __name__ == "__main__":
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
-    robot_height=1000
+    robot_height = 1000
     # step_action
     # add action for all code
     # Step 0 first send
@@ -448,7 +448,7 @@ if __name__ == "__main__":
     confirm_command = 0
     walk_to("instruction point")
     command_list = [
-        
+
         "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
         "Give me a cookies from the tall table",
         "Tell me how many people in the dining room are wearing white t-shirt",
@@ -466,14 +466,14 @@ if __name__ == "__main__":
         "Tell me the name of the person standing in the living room",
         "Say what day today is to the person raising their right arm in the dining room",
         "Give me a cup from the right tray",
-        
+
         "Meet Basil in the dining room and answer a question",
         "Tell me the shirt color of the person standing in the living room",
         "what color of t-shirt Jack is wearing in the dining room",
         "Give me a light bulb from the trash bin",
         "Fetch a glue gun from the left Kachaka shelf and put it on the left tray"
     ]
-    for i in range(1,4):
+    for i in range(1, 4):
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
@@ -498,8 +498,8 @@ if __name__ == "__main__":
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             cv2.destroyAllWindows()
-            #data = command_list[i]
-            #continue
+            # data = command_list[i]
+            # continue
             if "dining" in data:
                 dining_room_action = 1
             speak("dear host your command is")
@@ -528,7 +528,7 @@ if __name__ == "__main__":
         # get gemini answer
         nigga = 1
         while True:
-            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
+            r = requests.get("http://172.20.10.5:8888/Fambot", timeout=2.5)
             response_data = r.text
             dictt = json.loads(response_data)
             if dictt["Steps"] == 1:
@@ -558,7 +558,7 @@ if __name__ == "__main__":
         step_action = 0
         # continue
         liyt = Q2
-        diningroomcheck=0
+        diningroomcheck = 0
         pre_s = ""
         name_cnt = "none"
         ageList = ['1', '5', '10', '17', '27', '41', '50', '67']
@@ -736,7 +736,7 @@ if __name__ == "__main__":
                         cv2.imshow("capture_vision_(enumeration)1_img", image_flip)
                         cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.50.147:8888/upload_image"
+                    url = "http://172.20.10.5:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -749,7 +749,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://172.20.10.5:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -796,7 +796,7 @@ if __name__ == "__main__":
                     cv2.imshow("capture_vision_(descridption)1_img", image_flip)
                     cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.50.147:8888/upload_image"
+                    url = "http://172.20.10.5:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -809,7 +809,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://172.20.10.5:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -1013,7 +1013,7 @@ if __name__ == "__main__":
                             file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_color.jpg"
                             with open(file_path, 'rb') as f:
                                 files = {'image': (file_path.split('/')[-1], f)}
-                                url = "http://192.168.50.147:8888/upload_image"
+                                url = "http://172.20.10.5:8888/upload_image"
                                 response = requests.post(url, files=files)
                                 # remember to add the text question on the computer code
                             print("Upload Status Code:", response.status_code)
@@ -1025,7 +1025,7 @@ if __name__ == "__main__":
                             print(gg)
                             # get answer from gemini
                             while True:
-                                r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                                r = requests.get("http://172.20.10.5:8888/Fambot", timeout=10)
                                 response_data = r.text
                                 dictt = json.loads(response_data)
                                 if dictt["Steps"] == 12:
@@ -1141,7 +1141,7 @@ if __name__ == "__main__":
                         nav1_skip_cnt += 1
                         if nav1_skip_cnt >= 70:
                             dining_room_action = 2
-                            nav1_skip_cnt=0
+                            nav1_skip_cnt = 0
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1161,14 +1161,14 @@ if __name__ == "__main__":
                             step = "none"
                             action = "none"
                             step_action = 3
-                            nav1_skip_cnt=0
+                            nav1_skip_cnt = 0
                             speak("I can't find you I gonna go back to the host")
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.50.147:8888/upload_image"
+                            url = "http://172.20.10.5:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1179,7 +1179,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            r = requests.get("http://172.20.10.5:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1382,7 +1382,7 @@ if __name__ == "__main__":
                     # walk in front of the guy
                     if step == "turn" and dining_room_action == 0:
                         move(0, -0.2)
-                        nav2_skip_cnt +=1
+                        nav2_skip_cnt += 1
                         if nav2_skip_cnt >= 250:
                             step = "none"
                             action = "none"
@@ -1393,7 +1393,7 @@ if __name__ == "__main__":
                         nav2_skip_cnt += 1
                         if nav2_skip_cnt >= 70:
                             dining_room_action = 2
-                            nav2_skip_cnt=0
+                            nav2_skip_cnt = 0
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1413,14 +1413,14 @@ if __name__ == "__main__":
                             step = "none"
                             action = "none"
                             step_action = 3
-                            nav2_skip_cnt=0
+                            nav2_skip_cnt = 0
                             speak("I can't find you I gonna go back to the host")
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.50.147:8888/upload_image"
+                            url = "http://172.20.10.5:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1431,7 +1431,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            r = requests.get("http://172.20.10.5:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1605,7 +1605,7 @@ if __name__ == "__main__":
                     current_month = now1.strftime("%B")  # Full month name
                     current_day_name = now1.strftime("%A")  # Full weekday name
                     day_of_month = now1.strftime("%d")
-                    answer="none"
+                    answer = "none"
                     if "what" in s:
                         if "today" in s:
                             answer = f"It is 2 nd of May"
@@ -1701,7 +1701,7 @@ if __name__ == "__main__":
                     question=s
                     post_message_request("answer_list", "", question)
                     while True:
-                        r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                        r = requests.get("http://172.20.10.5:8888/Fambot", timeout=10)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == "answer1":
@@ -1760,7 +1760,7 @@ if __name__ == "__main__":
                         speech2_turn_skip += 1
                         if speech2_turn_skip >= 70:
                             dining_room_action = 2
-                            speech2_turn_skip=0
+                            speech2_turn_skip = 0
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1780,15 +1780,15 @@ if __name__ == "__main__":
                             step = "none"
                             action = "none"
                             step_action = 2
-                            speech2_turn_skip=0
-                            dining_room_action=0
+                            speech2_turn_skip = 0
+                            dining_room_action = 0
                             speak("I can't find you I gonna go back to the host")
                     if step == "confirm":
                         print("imwrited")
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.50.147:8888/upload_image"
+                            url = "http://172.20.10.5:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1799,7 +1799,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
+                            r = requests.get("http://172.20.10.5:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
