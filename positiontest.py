@@ -48,33 +48,33 @@ def walk_to(name):
 
 locations = {
     # Furniture and objects
-    "counter": [-3.324, 0.924, 1.57],
-    "left tray": [-3.665, 1.336, 1.57],
-    "right tray": [-3.278, 1.433, 1.57],
-    "pen holder": [-2.831, 1.509, 1.57],
-    "container": [-2.414, 1.508, 1.57],
+    "counter": [-3.324, 1.2, 1.57],
+    "left tray": [-3.874, 1.49, 1.57],
+    "right tray": [-3.478, 1.49, 1.57],
+    "pen holder": [-2.031, 1.49, 1.57],
+    "container": [-2.814, 1.49, 1.57],
     "left kachaka shelf": [-2.134, 1.145, 1.57],
     "right kachaka shelf": [-1.662, 1.114, 1.57],
-    "low table": [-2.544, 1.360, -1.57],
+    "low table": [-2.61,1.166, -1.57],
     "left chair": [-1.623, -1.582, -1.57],  #
     "right chair": [-1.940, -1.642, -1.57],  #
     "trash bin": [-4.442, 1.206, 1.57],  #
-    "tall table": [-2.544, 1.360, -1.57],
+    "tall table": [-1.432,1.192, -1.57],
     "left kachaka station": [-3.124, -2.026, -2.617],
     "right kachaka station": [-2.976, -1.794, 3.14],
     "shelf": [-2.884, -1.256, -1.57],
     # bed
     "bed": [-0.410,-0.640,-0.663],
     # dining room
-    "dining table": [-0.622, 1.404, 0],
+    "dining table": [-0.491, 1.404, 0],
     "couch": [1.813, 0.339, 2.180],
 
     # Locations and special points
-    "entrance": [1.596, 1.729, 0],
+    "exit": [1.596, 1.729, 0],
     "final": [2.888,-1.048, 0],
-    "exit": [1.677, -1.070, 0],
-    "instruction point": [-3.844,-1.612,-1.638],
-    "dining room": [-0.261, 1.349, 0],
+    "entrance": [1.677, -1.070, 0],
+    "instruction point": [-3.093,-1.571,-1.638],
+    "dining room": [-0.921, 1.349, 0],
     "living room": [-2.927, 1.279, 0],
     "bedroom": [-0.014, -0.719, -0.185],
     "study room": [-2.666, -1.412, -0.494]
