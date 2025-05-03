@@ -486,7 +486,7 @@ if __name__ == "__main__":
                 dining_room_action = 1
             speak("dear host your command is")
             time.sleep(0.3)
-            print("Yout command is **********************")
+            print("Your command is **********************")
             print(data)
             speak(str(data))
             print("********************")
