@@ -447,27 +447,15 @@ if __name__ == "__main__":
         "Give me a cookies from the tall table",
         "Tell me how many people in the dining room are wearing white t-shirt",
         "Meet Basil at the tall table then look for them in the study room",
-        "Tell me how many people crossing one's arms are in the study room",
         "Tell me what is the thinnest object on the shelf",
+        "Tell me the name of the person standing in the living room",
         "Tell me how many task items there are on the right tray",
-        "Lead the person pointing to the left from the right Kachaka station to the bed",
         "Follow the squatting person at the pen holder",
         "Grasp a noodles from the trash bin and put it on the container",
-        "Follow Sophia from the left tray to the dining room",
-        "Tell me how many kitchen items there are on the trash bin",
-        "Tell me the age of the person standing in the living room",
-        "Tell me how tall of the person standing in the living room",
-        "Tell me the name of the person standing in the living room",
         "Say what day today is to the person raising their right arm in the dining room",
-        "Give me a cup from the right tray",
-
         "Meet Basil in the dining room and answer a question",
-        "Tell me the shirt color of the person standing in the living room",
-        "what color of t-shirt Jack is wearing in the dining room",
-        "Give me a light bulb from the trash bin",
-        "Fetch a glue gun from the left Kachaka shelf and put it on the left tray"
     ]
-    for i in range(1, 4):
+    for i in range(1, 11):
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
