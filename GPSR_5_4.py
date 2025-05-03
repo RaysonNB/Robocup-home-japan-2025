@@ -35,6 +35,7 @@ from robotic_arm_control import RoboticController
 Dy = DynamixelController()
 Ro = RoboticController()
 id_list = [11, 13, 15, 14, 12, 1, 2]
+print('robot arm')
 Ro.open_robotic_arm("/dev/arm", id_list, Dy)
 
 #Ro.go_to_real_xyz_alpha(id_list, (0, 125, 80), 0, 0, 90, 1, Dy)
@@ -117,11 +118,11 @@ def callback_voice(msg):
 
 
 def speak(g):
-    print("[robot say]:", end=" ")
-    os.system(f'espeak -s 155 "{g}"')
+    print("[robot said]: ", end=" ")
+    os.system(f'espeak -s 150 "{g}"')
     # rospy.loginfo(g)
     print(g)
-    time.sleep(0.3)
+    time.sleep(0.5)
 
 
 def move(forward_speed: float = 0, turn_speed: float = 0):
@@ -434,7 +435,7 @@ if __name__ == "__main__":
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
-    robot_height = 1000
+    robot_height = 1050
     # step_action
     # add action for all code
     # Step 0 first send
@@ -442,7 +443,7 @@ if __name__ == "__main__":
     # Step 9 send image response text
     # step 10 get the image response
     gg = post_message_request("-1", "", "")
-    speak("please say start, then I will go to the instruction point")
+    #speak("please say start, then I will go to the instruction point")
     step = "none"
     confirm_command = 0
     #time.sleep(5)
@@ -463,8 +464,9 @@ if __name__ == "__main__":
         "Meet Basil at the tall table then look for them in the study room",
         "Tell me what is the thinnest object on the shelf",
     ]
-    for i in range(3, 4):
-        commandcntcnt=i
+    commandcntcnt=0
+    for i in range(1, 4):
+        commandcntcnt=commandcntcnt+1
         s=""
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
@@ -472,48 +474,31 @@ if __name__ == "__main__":
         speak("dear host please scan your qr code in front of my camera on top")
         yn = 0
         while True:
-            if yn == 1:
+            #print("step1")
+            if _frame2 is None: continue
+            code_image = _frame2.copy()
+            data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
+
+            if data:
+                print("QR Code detected:", data)
                 break
-            while True:
-                #print("step1")
-                if _frame2 is None: continue
-                code_image = _frame2.copy()
-                data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
 
-                if data:
-                    print("QR Code detected:", data)
-                    break
+            cv2.imshow("QR Code Scanner", code_image)
 
-                cv2.imshow("QR Code Scanner", code_image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        cv2.destroyAllWindows()
+        #data = command_list[i]
+        #continue
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            cv2.destroyAllWindows()
-            #data = command_list[i]
-            #continue
-            if "dining" in data:
-                dining_room_action = 1
-            speak("dear host your command is")
-            time.sleep(0.3)
-            print("Your command is **********************")
-            print(data)
-            speak(str(data))
-            print("********************")
-            time.sleep(0.3)
-            speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
-            s=""
-            while True:
-                print("speak",s)
-                time.sleep(1)
-                if "yes" in s:
-                    speak("ok")
-                    yn = 1
-                    break
-
-                elif " no" in s:
-                    speak("please scan it again")
-                    s = ""
-                    break
+        speak("dear host your command is")
+        time.sleep(0.3)
+        print("Your command is **********************")
+        print(data)
+        speak(str(data))
+        print("********************")
+        time.sleep(0.3)
+        s=""
 
         user_input = data
         # post question
@@ -541,9 +526,9 @@ if __name__ == "__main__":
         Q3 = Q3.replace(" me", " you")
         print("My understanding for command", i)
         gg = post_message_request("-1", "", "")
-        print("************************")
-        speak(Q3)
-        print("************************")
+        #print("************************")
+        #speak(Q3)
+        #print("************************")
         # say how the robot understand
         # speak(Q3[0])
         # divide
@@ -573,6 +558,15 @@ if __name__ == "__main__":
         uuu = data.lower()
         vd2_depth = 99999
         # room back up
+        questiong=""
+        if "$ROOM1" in liyt:
+            questiong=liyt["$ROOM1"].lower()
+            if "dining room" in questiong:
+                dining_room_action = 1
+        if "ROOM1" in liyt:
+            questiong=liyt["ROOM1"].lower()
+            if "dining room" in questiong:
+                dining_room_action = 1
         if "ROOM1" not in liyt and "$ROOM1" not in liyt and ("PLACE1" in liyt or "$PLACE1" in liyt):
             # Bedroom: bed
             # Dining room: dining table, couch
@@ -659,8 +653,11 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     time.sleep(2)
-                    speak("robot arm is in error")
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
                     speak("getting now")
+                    time.sleep(5)
+                    speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE2"
@@ -669,6 +666,7 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     step_action = 100
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     speak("storing")
                     final_speak_to_guest = ""
             # Manipulation2 just walk
@@ -687,8 +685,11 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     time.sleep(2)
-                    speak("robot arm is in error")
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
                     speak("getting now")
+                    time.sleep(5)
+                    speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
                     if " me " in user_input:
@@ -700,6 +701,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     step_action = 100
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     final_speak_to_guest = "here you are"
             # Vision E 1,2
             elif ("vision (enumeration)1" in command_type or (
@@ -1845,9 +1847,9 @@ if __name__ == "__main__":
                             "something" in user_input and "yourself" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
                     elif "what day today is" in user_input or ("today" in user_input and "day" in user_input):
-                        speak("today is 3 rd May in 2025")
+                        speak("today is 4 th of May in 2025")
                     elif "what day tomorrow is" in user_input or ("tomorrow" in user_input and "say" in user_input):
-                        speak("today is 4 th May in 2025")
+                        speak("today is 5 th of May in 2025")
                     elif "where robocup is held this year" in user_input or (
                             "where" in user_input and "robocup" in user_input and "year" in user_input):
                         speak("the robocup 2025 is held in Brazil, Salvador")
