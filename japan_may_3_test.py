@@ -108,7 +108,7 @@ def callback_voice(msg):
 
 def speak(g):
     print("[robot say]:", end=" ")
-    os.system(f'espeak -s 165 "{g}"')
+    os.system(f'espeak -s 155 "{g}"')
     # rospy.loginfo(g)
     print(g)
     time.sleep(0.3)
@@ -339,7 +339,7 @@ locations = {
 
     # Locations and special points
     "exit": [1.596, 1.729, 0],
-    "final": [2.888,-1.048, 0],
+    "exit2": [2.888,-1.048, 0],
     "entrance": [1.677, -1.070, 0],
     "instruction point": [-3.093,-1.571,-1.638],
     "dining room": [-0.921, 1.349, 0],
@@ -441,21 +441,28 @@ if __name__ == "__main__":
         time.sleep(1)
     step = "none"
     confirm_command = 0
+    speak("I will start now")
+    time.sleep(5)
     walk_to("instruction point")
     command_list = [
-        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-        "Give me a cookies from the tall table",
-        "Tell me how many people in the dining room are wearing white t-shirt",
-        "Meet Basil at the tall table then look for them in the study room",
-        "Tell me what is the thinnest object on the shelf",
+        "",
         "Tell me the name of the person standing in the living room",
         "Tell me how many task items there are on the right tray",
         "Follow the squatting person at the pen holder",
         "Grasp a noodles from the trash bin and put it on the container",
         "Say what day today is to the person raising their right arm in the dining room",
         "Meet Basil in the dining room and answer a question",
+        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
+        "Give me a cookies from the tall table",
+        "Tell me how many people in the dining room are wearing white t-shirt",
+        "Tell me what is the thinnest object on the shelf",
+        "Tell me what is the thinnest object on the shelf",
+        "Meet Basil at the tall table then look for them in the study room",
+        "Tell me what is the thinnest object on the shelf",
     ]
     for i in range(1, 4):
+        commandcntcnt=i
+        s=""
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
@@ -465,7 +472,7 @@ if __name__ == "__main__":
             if yn == 1:
                 break
             while True:
-                print("step1")
+                #print("step1")
                 if _frame2 is None: continue
                 code_image = _frame2.copy()
                 data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
@@ -492,7 +499,7 @@ if __name__ == "__main__":
             time.sleep(0.3)
             speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
             while True:
-                print("s",s)
+                print("speak",s)
                 time.sleep(1)
                 if "yes" in s:
                     speak("ok")
@@ -649,6 +656,7 @@ if __name__ == "__main__":
                         walk_to(liyt[name_position])
                     time.sleep(2)
                     speak("robot arm is in error")
+                    speak("getting now")
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE2"
@@ -657,6 +665,7 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     step_action = 100
+                    speak("storing")
                     final_speak_to_guest = ""
             # Manipulation2 just walk
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
@@ -675,6 +684,7 @@ if __name__ == "__main__":
                         walk_to(liyt[name_position])
                     time.sleep(2)
                     speak("robot arm is in error")
+                    speak("getting now")
                     step_action = 2
                 if step_action == 2:
                     if " me " in user_input:
@@ -756,7 +766,7 @@ if __name__ == "__main__":
                     except PermissionError:
                         print("File renamed failed")
             # vision D1
-            elif (("vision (descridption)1" in command_type or (
+            elif (("vision (description)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "descri" in command_type))):
                 if step_action == 0:
                     name_position = "$ROOM1"
@@ -815,7 +825,7 @@ if __name__ == "__main__":
                     except PermissionError:
                         print("File renamed failed")
             # vision D2
-            elif ("vision (descridption)2" in command_type or (
+            elif ("vision (description)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
                     name_position = "$ROOM1"
@@ -1862,9 +1872,9 @@ if __name__ == "__main__":
                 break
         walk_to("instruction point")
         print("***************")
-        print("command", i, end=" ")
+        print("command", commandcntcnt, end=" ")
         speak(final_speak_to_guest)
         print("***************")
         time.sleep(2)
-    walk_to("exit")
+    walk_to("exit2")
     speak("end")
