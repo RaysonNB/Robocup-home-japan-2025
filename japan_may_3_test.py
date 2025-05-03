@@ -455,12 +455,11 @@ if __name__ == "__main__":
         "Say what day today is to the person raising their right arm in the dining room",
         "Meet Basil in the dining room and answer a question",
     ]
-    for i in range(1, 11):
+    for i in range(1, 4):
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
-        data = command_list[i]
         yn = 0
         while True:
             if yn == 1:
@@ -480,7 +479,7 @@ if __name__ == "__main__":
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             cv2.destroyAllWindows()
-            #data = command_list[i]
+            data = command_list[i]
             #continue
             if "dining" in data:
                 dining_room_action = 1
@@ -545,7 +544,7 @@ if __name__ == "__main__":
         diningroomcheck = 0
         pre_s = ""
         name_cnt = "none"
-        ageList = ['1', '5', '10', '17', '27', '41', '50', '67']
+        ageList = ['1', '5', '13', '17', '27', '41', '50', '67']
         # Initialize video capture
         # video = cv2.VideoCapture(args.video if args.video else 0)
         padding = 20
@@ -606,6 +605,9 @@ if __name__ == "__main__":
         elif "tom" in uuu:
             real_name = "tom"
         v2_turn_skip = 0
+        speech2_turn_skip = 0
+        nav2_skip_cnt=0
+        none_cnt=0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -1192,9 +1194,10 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                            for i in range(55):
-                                move(0, -0.2)
-                                time.sleep(0.125)
+                            if dining_room_action == 0:
+                                for i in range(55):
+                                    move(0, -0.2)
+                                    time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
 
                     if action == "find":
@@ -1444,9 +1447,10 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                            for i in range(55):
-                                move(0, -0.2)
-                                time.sleep(0.125)
+                            if dining_room_action == 0:
+                                for i in range(55):
+                                    move(0, -0.2)
+                                    time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
 
                     if action == "find":
@@ -1534,25 +1538,11 @@ if __name__ == "__main__":
             # Speech1
             elif "speech1" in command_type or ("spee" in command_type and "1" in command_type):
                 if step_action == 0:
-                    if dining_room_action == 0:
-                        name_position = "$ROOM1"
-                        if "$ROOM1" not in liyt:
-                            name_position = "ROOM1"
-                        if name_position in liyt:
-                            walk_to(liyt[name_position])
-                    else:
-                        num1, num2, num3 = dining_room_dif["din1"]
-                        chassis.move_to(num1, num2, num3)
-                        while not rospy.is_shutdown():
-                            # 4. Get the chassis status.
-                            code = chassis.status_code
-                            text = chassis.status_text
-                            if code == 3:
-                                break
-                            if code == 4:
-                                break
-                        time.sleep(1)
-                        clear_costmaps
+                    name_position = "$ROOM1"
+                    if "$ROOM1" not in liyt:
+                        name_position = "ROOM1"
+                    if name_position in liyt:
+                        walk_to(liyt[name_position])
                     step_action = 1
                     action = "speak"
                 if step_action == 1:
@@ -1751,9 +1741,10 @@ if __name__ == "__main__":
                         else:
                             action = "find"
                             step = "turn"
-                            for i in range(55):
-                                move(0, -0.2)
-                                time.sleep(0.125)
+                            if dining_room_action == 0:
+                                for i in range(55):
+                                    move(0, -0.2)
+                                    time.sleep(0.125)
                         gg = post_message_request("-1", "", "")
                     if action == "find":
                         code_image = _frame2.copy()
