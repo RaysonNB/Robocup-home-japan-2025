@@ -31,7 +31,7 @@ KITCHEN_POINT   = (-4.138, 1.344, 1.57)
 PROMPT = """
 # Instruction
 Analyze the input image. Detect every objects on the table and try your best to classify them using the `Object List` below. 
-If an object isn't listed, use category `Unknown`. 
+If an object isn't listed, use category `Unknown` with its name in `object` field
 Please make sure not to leave any items behide
 You **MUST** output *only* a JSON list containing objects with keys `"object"` and `"category"`. 
 
@@ -53,7 +53,8 @@ You **MUST** output *only* a JSON list containing objects with keys `"object"` a
 | 12 | Phone Stand   | Task Item    |
 
 * Furnitures (i.e. Table, Chair) is not an object
-*  The `Light Bulb` will be packed in a box
+* `Cookies` is a green, rectangular box of Matcha Flavored cookies
+*  The `Light Bulb` will be packed in a black box
 * `Lunch Box` is a small, pink square container with a white lid featuring Piglet and hearts.
 * `Caramel Corn` is a blue bag of Tohato Salty Caramel Corn snack mix.
 * `Detergent` is a white bottle of Japanese cream cleanser with an orange scent.
