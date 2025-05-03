@@ -136,11 +136,6 @@ def post_message_request(step, s1, question):
     return result
 
 
-def callback_voice(msg):
-    global s
-    s = msg.text
-
-
 def check_item(name):
     corrected = "entrance"
     cnt = 0
@@ -437,6 +432,7 @@ if __name__ == "__main__":
     # Step 1 first get
     # Step 9 send image response text
     # step 10 get the image response
+    gg = post_message_request("-1", "", "")
     '''
     walk_to("entrance")
     speak("please say start, then I will go to the instruction point")
@@ -498,7 +494,7 @@ if __name__ == "__main__":
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             cv2.destroyAllWindows()
-            # data = command_list[i]
+            data = command_list[i]
             # continue
             if "dining" in data:
                 dining_room_action = 1
@@ -511,12 +507,14 @@ if __name__ == "__main__":
             time.sleep(0.3)
             speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
             while True:
+                print("s",s)
+                time.sleep(1)
                 if "yes" in s:
                     speak("ok")
                     yn = 1
                     break
 
-                if "no" in s:
+                elif " no" in s:
                     speak("please scan it again")
                     s = ""
                     break
