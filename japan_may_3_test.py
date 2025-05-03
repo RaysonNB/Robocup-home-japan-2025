@@ -314,50 +314,50 @@ def highlightFace(net, frame, conf_threshold=0.7):
             cv2.rectangle(frameOpencvDnn, (x1, y1), (x2, y2), (0, 255, 0), int(round(frameHeight / 150)), 8)
     return frameOpencvDnn, faceBoxes
 
-
 locations = {
     # Furniture and objects
-    "counter": [3.154, 2.870, 1.53],
-    "left tray": [3.350, 3.111, -1.5],
-    "right tray": [2.507, 3.287, -1.607],
-    "pen holder": [3.154, 2.870, 1.53],
-    "container": [3.350, 3.111, -1.5],
-    "left kachaka shelf": [2.507, 3.287, -1.607],
-    "right kachaka shelf": [-0.715, -0.193, 1.569],
-    "low table": [-1.182, 3.298, 3.12],
-    "left chair": [-0.261, -0.067, 0],
-    "right chair": [-0.265, 0.633, 0],
-    "trash bin": [2.490, 3.353, 1.53],
-    "tall table": [3.238, 3.351, 1.53],
-    "left kachaka station": [3.829, 3.092, 1.55],
-    "right kachaka station": [3.031, 3.436, 1.53],
-    "shelf": [-1.182, 3.298, 3.12],
+    "counter": [-3.324, 1.2, 1.57],
+    "left tray": [-3.874, 1.49, 1.57],
+    "right tray": [-3.478, 1.49, 1.57],
+    "pen holder": [-2.031, 1.49, 1.57],
+    "container": [-2.814, 1.49, 1.57],
+    "left kachaka shelf": [-2.134, 1.145, 1.57],
+    "right kachaka shelf": [-1.662, 1.114, 1.57],
+    "low table": [-2.61,1.166, -1.57],
+    "left chair": [-1.623, -1.582, -1.57],  #
+    "right chair": [-1.940, -1.642, -1.57],  #
+    "trash bin": [-4.442, 1.206, 1.57],  #
+    "tall table": [-1.432,1.192, -1.57],
+    "left kachaka station": [-3.124, -2.026, -2.617],
+    "right kachaka station": [-2.976, -1.794, 3.14],
+    "shelf": [-2.884, -1.256, -1.57],
     # bed
-    "bed": [5.080, 3.032, 1.54],
+    "bed": [-0.410,-0.640,-0.663],
     # dining room
-    "dining table": [-1.058, 4.001, 3.11],
-    "couch": [5.661, 3.102, 1.54],
+    "dining table": [-0.491, 1.404, 0],
+    "couch": [1.813, 0.339, 2.180],
 
     # Locations and special points
-    "entrance": [3.809, 2.981, 3.053],
-    "exit": [6.796, 3.083, 0],
-    "instruction point": [-0.967, -0.013, -1.709],
-    "dining room": [-0.397, 0.297, 0],
-    "living room": [3.364, 2.991, 1.436],
-    "bedroom": [0.028, 3.514, 3.139],
-    "study room": [-0.397, 0.297, 0]
+    "exit": [1.596, 1.729, 0],
+    "final": [2.888,-1.048, 0],
+    "entrance": [1.677, -1.070, 0],
+    "instruction point": [-3.093,-1.571,-1.638],
+    "dining room": [-0.921, 1.349, 0],
+    "living room": [-2.927, 1.279, 0],
+    "bedroom": [-0.014, -0.719, -0.185],
+    "study room": [-2.666, -1.412, -0.494]
 }
 # front 0 back 3.14 left 90 1.5 right 90 -1.5
 cout_location = {
-    "living room": [1.153, 3.338, 0],
-    "bedroom": [1.153, 3.338, 3.14],
-    "dining room": [-1.545, -0.303, 0.4],
-    "study room": [-1.581, -0.345, 0.15]
+    "living room": [-0.068, 1.220, 3.14],
+    "bedroom": [-1.951, -1.584, 0],
+    "dining room": [-2.348, 1.273, 0],
+    "study room": [-0.137, -1.579, 3.14]
 }
 
 dining_room_dif = {
-    "din1": [-1.545, -0.303, 1.57],
-    "din2": [1.214, 1.960, -1.57]  ##
+    "din1": [-0.934, 0.314, 1.568],
+    "din2": [1.916, 2.449, -1.510]
 }
 
 
