@@ -572,9 +572,9 @@ if __name__ == "__main__":
                 name_position = "PLACE1"
             if name_position in liyt:
                 ggg = liyt[name_position].lower()
-                if ggg == "bed" or ggg == "exit":
+                if ggg == "bed" or ggg == "entrance":
                     liyt["$ROOM1"] = "bedroom"
-                elif ggg == "dining table" or ggg == "couch" or ggg == "entrance":
+                elif ggg == "dining table" or ggg == "couch" or ggg == "exit":
                     liyt["$ROOM1"] = "dining room"
                 elif ggg in ["shelf", "left chair", "right chair", "left kachaka station",
                              "right kachaka station"]:
