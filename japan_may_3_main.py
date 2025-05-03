@@ -1282,8 +1282,7 @@ if __name__ == "__main__":
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
                         speak("hello dear " + real_name)
-                        speak(
-                            "please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak("look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
