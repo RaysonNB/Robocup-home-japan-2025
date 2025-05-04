@@ -449,8 +449,9 @@ if __name__ == "__main__":
     # speak("please say start, then I will go to the instruction point")
     step = "none"
     confirm_command = 0
-    # time.sleep(5)
-    #walk_to("instruction point")
+    speak("I am already")
+    time.sleep(5)
+    walk_to("instruction point")
     command_list = [
         "",
         "Say your team's name to the person pointing to the left in the bedroom",
@@ -464,7 +465,7 @@ if __name__ == "__main__":
         "Tell me what is the heaviest object on the shelf"
     ]
     commandcntcnt = 0
-    for i in range(2, 10):
+    for i in range(1,4):
         commandcntcnt = commandcntcnt + 1
         s = ""
         dining_room_action = 0
@@ -487,7 +488,7 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        data = command_list[i]
+        #data = command_list[i]
         # continue
 
         speak("dear host your command is")
@@ -1082,6 +1083,8 @@ if __name__ == "__main__":
                             time.sleep(0.1)
                             skip_cnt_vd += 1
                             s = s.lower()
+                            if skip_cnt_vd == 50 or skip_cnt_vd == 100 or skip_cnt_vd == 150 or skip_cnt_vd==200:
+                                speak("please speak louder")
                             if skip_cnt_vd >= 250:
                                 step_action = 2
                                 speak("hello chikako, I gonna go now")
