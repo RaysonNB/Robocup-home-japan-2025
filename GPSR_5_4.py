@@ -450,7 +450,7 @@ if __name__ == "__main__":
     step = "none"
     confirm_command = 0
     # time.sleep(5)
-    walk_to("instruction point")
+    #walk_to("instruction point")
     command_list = [
         "",
         "Say your team's name to the person pointing to the left in the bedroom",
@@ -464,7 +464,7 @@ if __name__ == "__main__":
         "Tell me what is the heaviest object on the shelf"
     ]
     commandcntcnt = 0
-    for i in range(5, 10):
+    for i in range(2, 10):
         commandcntcnt = commandcntcnt + 1
         s = ""
         dining_room_action = 0
@@ -657,9 +657,9 @@ if __name__ == "__main__":
                     cv2.imshow("man1", code_image)
                     time.sleep(2)
                     speak("getting now")
-                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, -8, 0, Dy)
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
-
                     time.sleep(3)
                     speak("I can't get it")
                     step_action = 2
@@ -691,7 +691,8 @@ if __name__ == "__main__":
                     cv2.imshow("man1", code_image)
                     time.sleep(2)
                     speak("getting now")
-                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, -8, 0, Dy)
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
                     time.sleep(3)
                     speak("I can't get it")
