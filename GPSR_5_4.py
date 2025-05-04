@@ -767,7 +767,7 @@ if __name__ == "__main__":
                         os.rename(new_file_name, current_file_name)
                         # print("File renamed successfully.")
                         print("************")
-                        print("command", i, "File name:", current_file_name)
+                        print("command", commandcntcnt, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
@@ -827,7 +827,7 @@ if __name__ == "__main__":
                     try:
                         os.rename(new_file_name, current_file_name)
                         print("************")
-                        print("command", i, "File name:", current_file_name)
+                        print("command", commandcntcnt, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
@@ -981,7 +981,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1044,7 +1044,7 @@ if __name__ == "__main__":
                             try:
                                 os.rename(new_file_name, current_file_name)
                                 print("************")
-                                print("command", i, "File name:", current_file_name)
+                                print("command", commandcntcnt, "File name:", current_file_name)
                                 print("************")
                             except FileNotFoundError:
                                 print("File renamed failed")
@@ -1201,13 +1201,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature=feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
 
                             speak("found you the guest " + feature)
                             action = "front"
@@ -1226,7 +1227,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1461,13 +1462,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature=feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
                             speak("found you the guying " + feature)
                             action = "front"
                             step = "none"
@@ -1485,7 +1487,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1755,13 +1757,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature=feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
                             speak("found you the guy " + str(feature))
                             action = "front"
                             step = "none"
@@ -1778,7 +1781,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
