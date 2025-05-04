@@ -464,7 +464,7 @@ if __name__ == "__main__":
         "Tell me what is the heaviest object on the shelf"
     ]
     commandcntcnt = 0
-    for i in range(1, 10):
+    for i in range(1, 4):
         commandcntcnt = commandcntcnt + 1
         s = ""
         dining_room_action = 0
@@ -487,7 +487,7 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        data = command_list[i]
+        #data = command_list[i]
         # continue
 
         speak("dear host your command is")
