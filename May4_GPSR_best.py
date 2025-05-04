@@ -28,7 +28,19 @@ import speech_recognition as sr
 import json
 import os
 from datetime import datetime
+from dynamixel_control import DynamixelController
+from robotic_arm_control import RoboticController
 
+# Robotic Arm launch
+Dy = DynamixelController()
+Ro = RoboticController()
+id_list = [11, 13, 15, 14, 12, 1, 2]
+print('robot arm')
+Ro.open_robotic_arm("/dev/arm", id_list, Dy)
+
+
+# Ro.go_to_real_xyz_alpha(id_list, (0, 125, 80), 0, 0, 90, 1, Dy)
+# time.sleep(2.0)
 
 # gemini2
 def callback_image2(msg):
@@ -107,11 +119,11 @@ def callback_voice(msg):
 
 
 def speak(g):
-    print("[robot say]:", end=" ")
-    os.system(f'espeak -s 165 "{g}"')
+    print("[robot said]: ", end=" ")
+    os.system(f'espeak -s 150 "{g}"')
     # rospy.loginfo(g)
     print(g)
-    time.sleep(0.3)
+    time.sleep(0.5)
 
 
 def move(forward_speed: float = 0, turn_speed: float = 0):
@@ -123,7 +135,7 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
 
 
 def post_message_request(step, s1, question):
-    api_url = "http://192.168.60.48:8888/Fambot"
+    api_url = "http://192.168.60.20:8888/Fambot"
     my_todo = {"Question1": "None",
                "Question2": "None",
                "Question3": "None",
@@ -314,34 +326,35 @@ def highlightFace(net, frame, conf_threshold=0.7):
             cv2.rectangle(frameOpencvDnn, (x1, y1), (x2, y2), (0, 255, 0), int(round(frameHeight / 150)), 8)
     return frameOpencvDnn, faceBoxes
 
+
 locations = {
     # Furniture and objects
-    "counter": [-3.324, 1.2, 1.57],
-    "left tray": [-3.874, 1.49, 1.57],
-    "right tray": [-3.478, 1.49, 1.57],
-    "pen holder": [-2.031, 1.49, 1.57],
-    "container": [-2.814, 1.49, 1.57],
+    "counter": [-3.556, 0.986, 1.57],
+    "left tray": [-3.783, 1.547, 1.57],
+    "right tray": [-3.518, 1.49, 1.57],
+    "pen holder": [-3.331, 1.49, 1.57],
+    "container": [-3.114, 1.49, 1.57],
     "left kachaka shelf": [-2.134, 1.145, 1.57],
     "right kachaka shelf": [-1.662, 1.114, 1.57],
-    "low table": [-2.61,1.166, -1.57],
+    "low table": [-2.61, 1.166, -1.57],
     "left chair": [-1.623, -1.582, -1.57],  #
-    "right chair": [-1.940, -1.642, -1.57],  #
+    "right chair": [-2.334, -1.248, -1.57],  #
     "trash bin": [-4.442, 1.206, 1.57],  #
-    "tall table": [-1.432,1.192, -1.57],
+    "tall table": [-1.699, 1.542, -1.57],
     "left kachaka station": [-3.124, -2.026, -2.617],
     "right kachaka station": [-2.976, -1.794, 3.14],
-    "shelf": [-2.884, -1.256, -1.57],
+    "shelf": [-2.884, -1.2, -1.57],
     # bed
-    "bed": [-0.410,-0.640,-0.663],
+    "bed": [-0.410, -0.640, -0.663],
     # dining room
     "dining table": [-0.491, 1.404, 0],
     "couch": [1.813, 0.339, 2.180],
 
     # Locations and special points
     "exit": [1.596, 1.729, 0],
-    "final": [2.888,-1.048, 0],
+    "exit2": [2.888, -1.048, 0],
     "entrance": [1.677, -1.070, 0],
-    "instruction point": [-3.093,-1.571,-1.638],
+    "instruction point": [-4.024, -1.409, -1.638],
     "dining room": [-0.921, 1.349, 0],
     "living room": [-2.927, 1.279, 0],
     "bedroom": [-0.014, -0.719, -0.185],
@@ -356,7 +369,7 @@ cout_location = {
 }
 
 dining_room_dif = {
-    "din1": [-0.934, 0.314, 1.568],
+    "din1": [-0.833, 0.414, 1.568],
     "din2": [1.916, 2.449, -1.510]
 }
 
@@ -425,7 +438,7 @@ if __name__ == "__main__":
     dnn_yolo1 = Yolov8("yolov8n", device_name="GPU")
     s = ""
     rospy.Subscriber("/voice/text", Voice, callback_voice)
-    robot_height = 1000
+    robot_height = 1050
     # step_action
     # add action for all code
     # Step 0 first send
@@ -433,29 +446,28 @@ if __name__ == "__main__":
     # Step 9 send image response text
     # step 10 get the image response
     gg = post_message_request("-1", "", "")
-    speak("please say start, then I will go to the instruction point")
-    while True:
-        print("speak",s)
-        if "start" in s or "stop" in s:
-            break
-        time.sleep(1)
+    # speak("please say start, then I will go to the instruction point")
     step = "none"
     confirm_command = 0
+    speak("I am already")
+    time.sleep(5)
     walk_to("instruction point")
     command_list = [
-        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-        "Give me a cookies from the tall table",
-        "Tell me how many people in the dining room are wearing white t-shirt",
-        "Meet Basil at the tall table then look for them in the study room",
-        "Tell me what is the thinnest object on the shelf",
-        "Tell me the name of the person standing in the living room",
-        "Tell me how many task items there are on the right tray",
-        "Follow the squatting person at the pen holder",
-        "Grasp a noodles from the trash bin and put it on the container",
-        "Say what day today is to the person raising their right arm in the dining room",
-        "Meet Basil in the dining room and answer a question",
+        "",
+        "Say your team's name to the person pointing to the left in the bedroom",
+        "Give me a cup from the shelf",
+        "Meet Yoshimura in the study room and escort them to the tall table",
+        "Navigate to the study room then meet Andrew and follow them to the dining room",
+        "Meet Jack at the right tray then locate them in the study room",
+        "Answer the quiz of the person giving the V sign in the study room",
+        "Answer the question of the person pointing to the left in the living room",
+        "Tell me what is the thinnest object on the low table",
+        "Tell me what is the heaviest object on the shelf"
     ]
+    commandcntcnt = 0
     for i in range(1, 4):
+        commandcntcnt = commandcntcnt + 1
+        s = ""
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
@@ -479,10 +491,8 @@ if __name__ == "__main__":
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             cv2.destroyAllWindows()
-            #data = command_list[i]
-            #continue
-            if "dining" in data:
-                dining_room_action = 1
+            # data = command_list[i]
+            # continue
             speak("dear host your command is")
             time.sleep(0.3)
             print("Your command is **********************")
@@ -492,7 +502,7 @@ if __name__ == "__main__":
             time.sleep(0.3)
             speak("to confirm your command plase answer robot yes yes yes or robot no no no,  thank you")
             while True:
-                print("s",s)
+                print("s", s)
                 time.sleep(1)
                 if "yes" in s:
                     speak("ok")
@@ -503,7 +513,6 @@ if __name__ == "__main__":
                     speak("please scan it again")
                     s = ""
                     break
-
         user_input = data
         # post question
         gg = post_message_request("first", user_input, "")  # step
@@ -511,7 +520,7 @@ if __name__ == "__main__":
         # get gemini answer
         nigga = 1
         while True:
-            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
             response_data = r.text
             dictt = json.loads(response_data)
             if dictt["Steps"] == 1:
@@ -530,21 +539,22 @@ if __name__ == "__main__":
         Q3 = Q3.replace(" me", " you")
         print("My understanding for command", i)
         gg = post_message_request("-1", "", "")
-        print("************************")
-        speak(Q3)
-        print("************************")
+        # print("************************")
+        # speak(Q3)
+        # print("************************")
         # say how the robot understand
         # speak(Q3[0])
         # divide
-        command_type = str(Q1[0])
+        command_type = str(Q1)
         command_type = command_type.lower()
+        print("final command", command_type)
         step_action = 0
         # continue
         liyt = Q2
         diningroomcheck = 0
         pre_s = ""
         name_cnt = "none"
-        ageList = ['1', '5', '13', '17', '27', '41', '50', '67']
+        ageList = ['1', '5', '13', '20', '27', '41', '50', '67']
         # Initialize video capture
         # video = cv2.VideoCapture(args.video if args.video else 0)
         padding = 20
@@ -562,6 +572,15 @@ if __name__ == "__main__":
         uuu = data.lower()
         vd2_depth = 99999
         # room back up
+        questiong = ""
+        if "$ROOM1" in liyt:
+            questiong = liyt["$ROOM1"].lower()
+            if "dining room" in questiong:
+                dining_room_action = 1
+        if "ROOM1" in liyt:
+            questiong = liyt["ROOM1"].lower()
+            if "dining room" in questiong:
+                dining_room_action = 1
         if "ROOM1" not in liyt and "$ROOM1" not in liyt and ("PLACE1" in liyt or "$PLACE1" in liyt):
             # Bedroom: bed
             # Dining room: dining table, couch
@@ -572,9 +591,9 @@ if __name__ == "__main__":
                 name_position = "PLACE1"
             if name_position in liyt:
                 ggg = liyt[name_position].lower()
-                if ggg == "bed" or ggg == "entrance":
+                if ggg == "bed" or ggg == "exit":
                     liyt["$ROOM1"] = "bedroom"
-                elif ggg == "dining table" or ggg == "couch" or ggg == "exit":
+                elif ggg == "dining table" or ggg == "couch" or ggg == "entrance":
                     liyt["$ROOM1"] = "dining room"
                 elif ggg in ["shelf", "left chair", "right chair", "left kachaka station",
                              "right kachaka station"]:
@@ -606,8 +625,10 @@ if __name__ == "__main__":
             real_name = "tom"
         v2_turn_skip = 0
         speech2_turn_skip = 0
-        nav2_skip_cnt=0
-        none_cnt=0
+        nav2_skip_cnt = 0
+        speak_nack = 0
+        none_cnt = 0
+        followmecnt = 0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -647,8 +668,14 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    cv2.imshow("man1", code_image)
                     time.sleep(2)
-                    speak("robot arm is in error")
+                    speak("getting now")
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, -8, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
+                    time.sleep(3)
+                    speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
                     name_position = "$PLACE2"
@@ -657,6 +684,8 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     step_action = 100
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
+                    speak("storing")
                     final_speak_to_guest = ""
             # Manipulation2 just walk
             elif "manipulation2" in command_type or ("mani" in command_type and "2" in command_type):
@@ -673,8 +702,14 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    cv2.imshow("man1", code_image)
                     time.sleep(2)
-                    speak("robot arm is in error")
+                    speak("getting now")
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, 90, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 150, 200], 25, 0, -8, 0, Dy)
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
+                    time.sleep(3)
+                    speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
                     if " me " in user_input:
@@ -686,6 +721,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     step_action = 100
+                    Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     final_speak_to_guest = "here you are"
             # Vision E 1,2
             elif ("vision (enumeration)1" in command_type or (
@@ -710,6 +746,7 @@ if __name__ == "__main__":
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
+                    speak("taking picture")
                     print("take picture")
                     # save frame
                     output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
@@ -721,7 +758,7 @@ if __name__ == "__main__":
                         cv2.imshow("capture_vision_(enumeration)1_img", image_flip)
                         cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.60.48:8888/upload_image"
+                    url = "http://192.168.60.20:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -734,7 +771,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -749,14 +786,14 @@ if __name__ == "__main__":
                         os.rename(new_file_name, current_file_name)
                         # print("File renamed successfully.")
                         print("************")
-                        print("command", i, "File name:", current_file_name)
+                        print("command", commandcntcnt, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
                     except PermissionError:
                         print("File renamed failed")
             # vision D1
-            elif (("vision (descridption)1" in command_type or (
+            elif (("vision (description)1" in command_type or (
                     "vision" in command_type and "1" in command_type and "descri" in command_type))):
                 if step_action == 0:
                     name_position = "$ROOM1"
@@ -774,6 +811,7 @@ if __name__ == "__main__":
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
+                    speak("taking picture")
                     print("take picture")
                     # save frame
                     image_flip = cv2.flip(_frame1, 0)
@@ -781,7 +819,7 @@ if __name__ == "__main__":
                     cv2.imshow("capture_vision_(descridption)1_img", image_flip)
                     cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.60.48:8888/upload_image"
+                    url = "http://192.168.60.20:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -794,7 +832,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -808,14 +846,14 @@ if __name__ == "__main__":
                     try:
                         os.rename(new_file_name, current_file_name)
                         print("************")
-                        print("command", i, "File name:", current_file_name)
+                        print("command", commandcntcnt, "File name:", current_file_name)
                         print("************")
                     except FileNotFoundError:
                         print("File renamed failed")
                     except PermissionError:
                         print("File renamed failed")
             # vision D2
-            elif ("vision (descridption)2" in command_type or (
+            elif ("vision (description)2" in command_type or (
                     "vision" in command_type and "2" in command_type and "descri" in command_type)):
                 if step_action == 0:
                     name_position = "$ROOM1"
@@ -849,7 +887,7 @@ if __name__ == "__main__":
                     detections = dnn_yolo1.forward(code_image)[0]["det"]
                     # clothes_yolo
                     # nearest people
-                    nx = 3000
+                    nx = 1750
                     cx_n, cy_n = 0, 0
                     CX_ER = 99999
                     need_position = 0
@@ -922,7 +960,7 @@ if __name__ == "__main__":
                                     break
                         if skip_cnt_vd >= 250:
                             step_action = 2
-                            final_speak_to_guest = "the guys height is 165.5 cm"
+                            final_speak_to_guest = "the guys height is 173.5 cm"
                             speak("ok")
                         if len(A) != 0 and yu >= 1:
                             cv2.circle(code_image, (A[0], A[1]), 3, (0, 255, 0), -1)
@@ -962,7 +1000,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -999,7 +1037,7 @@ if __name__ == "__main__":
                             file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_color.jpg"
                             with open(file_path, 'rb') as f:
                                 files = {'image': (file_path.split('/')[-1], f)}
-                                url = "http://192.168.60.48:8888/upload_image"
+                                url = "http://192.168.60.20:8888/upload_image"
                                 response = requests.post(url, files=files)
                                 # remember to add the text question on the computer code
                             print("Upload Status Code:", response.status_code)
@@ -1011,7 +1049,7 @@ if __name__ == "__main__":
                             print(gg)
                             # get answer from gemini
                             while True:
-                                r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                                r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                                 response_data = r.text
                                 dictt = json.loads(response_data)
                                 if dictt["Steps"] == 12:
@@ -1025,7 +1063,7 @@ if __name__ == "__main__":
                             try:
                                 os.rename(new_file_name, current_file_name)
                                 print("************")
-                                print("command", i, "File name:", current_file_name)
+                                print("command", commandcntcnt, "File name:", current_file_name)
                                 print("************")
                             except FileNotFoundError:
                                 print("File renamed failed")
@@ -1058,6 +1096,8 @@ if __name__ == "__main__":
                             time.sleep(0.1)
                             skip_cnt_vd += 1
                             s = s.lower()
+                            if skip_cnt_vd == 50 or skip_cnt_vd == 100 or skip_cnt_vd == 150 or skip_cnt_vd == 200:
+                                speak("please speak louder")
                             if skip_cnt_vd >= 250:
                                 step_action = 2
                                 speak("hello chikako, I gonna go now")
@@ -1092,6 +1132,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1129,6 +1170,7 @@ if __name__ == "__main__":
                         if nav1_skip_cnt >= 70:
                             dining_room_action = 2
                             nav1_skip_cnt = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1155,7 +1197,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1166,7 +1208,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1180,13 +1222,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature = feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
 
                             speak("found you the guest " + feature)
                             action = "front"
@@ -1205,7 +1248,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1260,7 +1303,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 700:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
@@ -1268,21 +1311,25 @@ if __name__ == "__main__":
                     if action == "speak":
                         speak("hello")
                         speak(real_name)
-                        speak("can u stand behind me and I will follow u now")
+                        # speak("can u stand behind me and I will follow u now")
                         time.sleep(2)
                         for i in range(78):
                             move(0, -0.35)
                             time.sleep(0.125)
                         if real_name == "guest":
-                            speak("dear guest please say robot you can stop")
+                            speak("dear guest please stand in front of me")
+                            speak("and remember to say robot you can stop")
                         else:
                             speak(real_name)
-                            speak("please say robot you can stop")
+                            speak("Please stand in front of me")
+                            speak("and remember to say robot you can stop")
                         # time.sleep(0.5)
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
                         speak("hello dear " + real_name)
-                        speak("look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak("I will start follow you now")
+                        # speak(
+                        #    "Look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1290,7 +1337,7 @@ if __name__ == "__main__":
                 if action == 1:
                     s = s.lower()
                     print("listening", s)
-                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s:
+                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s or step == "back":
                         action = 0
                         step_action = 3
                         speak("I will go back now bye bye")
@@ -1331,6 +1378,20 @@ if __name__ == "__main__":
 
                         x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
                         print("turn_x_z:", x, z)
+
+                    if x == 0 and z == 0:
+                        if speak_nack >= 20:
+                            speak("don't walk too fast, pleae come back")
+                            speak_nack = 0
+                        speak_nack += 1
+                        followmecnt += 1
+                    else:
+                        followmecnt = 0
+                    if followmecnt >= 150:
+                        step = "back"
+                        speak("I cna't find you I gonna go back now")
+                        followmecnt = 0
+                    print("follow", followmecnt)
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
@@ -1344,6 +1405,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1382,6 +1444,7 @@ if __name__ == "__main__":
                         if nav2_skip_cnt >= 70:
                             dining_room_action = 2
                             nav2_skip_cnt = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1408,7 +1471,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1419,7 +1482,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1433,13 +1496,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature = feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
                             speak("found you the guying " + feature)
                             action = "front"
                             step = "none"
@@ -1457,7 +1521,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1511,7 +1575,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 700:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
@@ -1550,12 +1614,10 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    for i in range(250):
+                        move(0, -0.2)
+                        time.sleep(0.125)
                     if action == "speak":
-                        if real_name == "guest":
-                            speak("hello dear guest can u stand in front of me")
-                        else:
-                            speak(real_name)
-                            speak("can u stand in front of me")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1581,7 +1643,7 @@ if __name__ == "__main__":
                     day_of_month = now1.strftime("%d")
                     answer = "none"
                     if "move" in s or "way" in s:
-                        answer="Because you're holding my joystick."
+                        answer = "Because you're holding my joystick."
                     elif "correct" in s:
                         print("***************")
                         speak("It's spelled")
@@ -1590,7 +1652,7 @@ if __name__ == "__main__":
                         speak("b")
                         speak("o")
                         speak("t")
-                        answer="no need"
+                        answer = "no need"
                         print("***************")
                     elif "star" in s or "system" in s:
                         answer = "It is the Sun."
@@ -1603,7 +1665,7 @@ if __name__ == "__main__":
                         answer = "none"
                     time.sleep(0.1)
                     none_cnt += 1
-                    if failed_cnt > 3:
+                    if failed_cnt > 4:
                         print("***************")
                         speak("It's spelled")
                         speak("r")
@@ -1615,7 +1677,7 @@ if __name__ == "__main__":
                         print("***************")
                         step_action = 4
                     if answer == "none" and none_cnt >= 250:
-                        speak("can u please speak it again")
+                        speak("can u please speak it louder")
                         none_cnt = 0
                         failed_cnt += 1
                     elif answer != "none":
@@ -1637,6 +1699,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1675,6 +1738,7 @@ if __name__ == "__main__":
                         if speech2_turn_skip >= 70:
                             dining_room_action = 2
                             speech2_turn_skip = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1702,7 +1766,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1713,7 +1777,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1727,13 +1791,14 @@ if __name__ == "__main__":
                         try:
                             os.rename(new_file_name, current_file_name)
                             print("************")
-                            print("command", i, "File name:", current_file_name)
+                            print("command", commandcntcnt, "File name:", current_file_name)
                             print("************")
                         except FileNotFoundError:
                             print("File renamed failed")
                         except PermissionError:
                             print("File renamed failed")
-                        if "yes" in aaa or "ys" in aaa:
+                        feature = feature.lower()
+                        if "yes" in aaa or "ys" in aaa or "none" in feature:
                             speak("found you the guy " + str(feature))
                             action = "front"
                             step = "none"
@@ -1750,7 +1815,7 @@ if __name__ == "__main__":
                         detections = dnn_yolo1.forward(code_image)[0]["det"]
                         # clothes_yolo
                         # nearest people
-                        nx = 2000
+                        nx = 1750
                         cx_n, cy_n = 0, 0
                         CX_ER = 99999
                         need_position = 0
@@ -1804,7 +1869,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 700:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
@@ -1831,9 +1896,9 @@ if __name__ == "__main__":
                             "something" in user_input and "yourself" in user_input):
                         speak("We are Fambot from Macau Puiching Middle School, and I was made in 2024")
                     elif "what day today is" in user_input or ("today" in user_input and "day" in user_input):
-                        speak("today is 3 rd May in 2025")
+                        speak("today is 4 th of May in 2025")
                     elif "what day tomorrow is" in user_input or ("tomorrow" in user_input and "say" in user_input):
-                        speak("today is 4 th May in 2025")
+                        speak("today is 5 th of May in 2025")
                     elif "where robocup is held this year" in user_input or (
                             "where" in user_input and "robocup" in user_input and "year" in user_input):
                         speak("the robocup 2025 is held in Brazil, Salvador")
@@ -1849,7 +1914,7 @@ if __name__ == "__main__":
                         speak("the current time is" + current_time)
                     else:
                         speak("the result of 3 plus 5 is 8")
-                    #elif "what the result of 3 plus 5 is" in s or ("3" in s and "5" in s and "plus" in s):
+                    # elif "what the result of 3 plus 5 is" in s or ("3" in s and "5" in s and "plus" in s):
                     #    speak("the result of 3 plus 5 is 8")
                     step_action = 3
                     print("***************")
@@ -1858,13 +1923,13 @@ if __name__ == "__main__":
                     speak("I will go back now bye bye")
                     step_action = 100
             else:
-                speak("I can't do it, please take the next command please")
+                speak("please scan it again")
                 break
         walk_to("instruction point")
         print("***************")
-        print("command", i, end=" ")
+        print("command", commandcntcnt, end=" ")
         speak(final_speak_to_guest)
         print("***************")
         time.sleep(2)
-    walk_to("exit")
+    walk_to("exit2")
     speak("end")
