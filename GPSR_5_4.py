@@ -450,22 +450,18 @@ if __name__ == "__main__":
     walk_to("instruction point")
     command_list = [
         "",
-        "Tell me the name of the person standing in the living room",
-        "Tell me how many task items there are on the right tray",
-        "Follow the squatting person at the pen holder",
-        "Grasp a noodles from the trash bin and put it on the container",
-        "Say what day today is to the person raising their right arm in the dining room",
-        "Meet Basil in the dining room and answer a question",
-        "Guide the person wearing a orange jacket from the right Kachaka station to the left Kachaka station",
-        "Give me a cookies from the tall table",
-        "Tell me how many people in the dining room are wearing white t-shirt",
-        "Tell me what is the thinnest object on the shelf",
-        "Tell me what is the thinnest object on the shelf",
-        "Meet Basil at the tall table then look for them in the study room",
-        "Tell me what is the thinnest object on the shelf",
+        "Say your team's name to the person pointing to the left in the bedroom",
+        "Give me a cup from the shelf",
+        "Meet Yoshimura in the study room and escort them to the tall table",
+        "Navigate to the study room then meet Andrew and follow them to the dining room",
+        "Meet Jack at the right tray then locate them in the study room",
+        "Answer the quiz of the person giving the V sign in the study room",
+        "Answer the question of the person pointing to the left in the living room",
+        "Tell me what is the thinnest object on the low table",
+        "Tell me what is the heaviest object on the shelf"
     ]
     commandcntcnt=0
-    for i in range(1, 4):
+    for i in range(1, 10):
         commandcntcnt=commandcntcnt+1
         s=""
         dining_room_action = 0
@@ -488,7 +484,7 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        #data = command_list[i]
+        data = command_list[i]
         #continue
 
         speak("dear host your command is")
