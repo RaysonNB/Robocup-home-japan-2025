@@ -613,6 +613,7 @@ if __name__ == "__main__":
         speech2_turn_skip = 0
         nav2_skip_cnt=0
         none_cnt=0
+        followmecnt=0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -653,10 +654,11 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     time.sleep(2)
+                    speak("getting now")
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
-                    speak("getting now")
-                    time.sleep(5)
+                    
+                    time.sleep(3)
                     speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
@@ -685,10 +687,10 @@ if __name__ == "__main__":
                     if name_position in liyt:
                         walk_to(liyt[name_position])
                     time.sleep(2)
+                    speak("getting now")
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
-                    speak("getting now")
-                    time.sleep(5)
+                    time.sleep(3)
                     speak("I can't get it")
                     step_action = 2
                 if step_action == 2:
@@ -726,6 +728,7 @@ if __name__ == "__main__":
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
+                    speak("taking picture")
                     print("take picture")
                     # save frame
                     output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
@@ -790,6 +793,7 @@ if __name__ == "__main__":
                     step_action = 1
                 if step_action == 1:
                     time.sleep(2)
+                    speak("taking picture")
                     print("take picture")
                     # save frame
                     image_flip = cv2.flip(_frame1, 0)
@@ -1108,6 +1112,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1145,6 +1150,7 @@ if __name__ == "__main__":
                         if nav1_skip_cnt >= 70:
                             dining_room_action = 2
                             nav1_skip_cnt = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1276,7 +1282,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 1200:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
@@ -1306,7 +1312,7 @@ if __name__ == "__main__":
                 if action == 1:
                     s = s.lower()
                     print("listening", s)
-                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s:
+                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s or step=="back":
                         action = 0
                         step_action = 3
                         speak("I will go back now bye bye")
@@ -1347,6 +1353,10 @@ if __name__ == "__main__":
 
                         x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
                         print("turn_x_z:", x, z)
+                        if followmecnt>=1500:
+                            step="back"
+                            followmecnt=0
+                        followmecnt+=1
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
@@ -1360,6 +1370,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1398,6 +1409,7 @@ if __name__ == "__main__":
                         if nav2_skip_cnt >= 70:
                             dining_room_action = 2
                             nav2_skip_cnt = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1527,7 +1539,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 1200:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
@@ -1566,12 +1578,10 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    for i in range(250):
+                        move(0, -0.2)
+                        time.sleep(0.125)
                     if action == "speak":
-                        if real_name == "guest":
-                            speak("hello dear guest can u stand in front of me")
-                        else:
-                            speak(real_name)
-                            speak("can u stand in front of me")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1619,7 +1629,7 @@ if __name__ == "__main__":
                         answer = "none"
                     time.sleep(0.1)
                     none_cnt += 1
-                    if failed_cnt > 3:
+                    if failed_cnt > 4:
                         print("***************")
                         speak("It's spelled")
                         speak("r")
@@ -1631,7 +1641,7 @@ if __name__ == "__main__":
                         print("***************")
                         step_action = 4
                     if answer == "none" and none_cnt >= 250:
-                        speak("can u please speak it again")
+                        speak("can u please speak it louder")
                         none_cnt = 0
                         failed_cnt += 1
                     elif answer != "none":
@@ -1653,6 +1663,7 @@ if __name__ == "__main__":
                         if name_position in liyt:
                             walk_to(liyt[name_position])
                     else:
+                        speak("going to first dining room")
                         num1, num2, num3 = dining_room_dif["din1"]
                         chassis.move_to(num1, num2, num3)
                         while not rospy.is_shutdown():
@@ -1691,6 +1702,7 @@ if __name__ == "__main__":
                         if speech2_turn_skip >= 70:
                             dining_room_action = 2
                             speech2_turn_skip = 0
+                            speak("going to second dining room")
                             num1, num2, num3 = dining_room_dif["din2"]
                             chassis.move_to(num1, num2, num3)
                             while not rospy.is_shutdown():
@@ -1820,7 +1832,7 @@ if __name__ == "__main__":
                                 cy = i
                         _, _, d = get_real_xyz(_depth2, cx, cy, 2)
                         print("depth", d)
-                        if d != 0 and d <= 1200:
+                        if d != 0 and d <= 1000:
                             action = "speak"
                             move(0, 0)
                         else:
