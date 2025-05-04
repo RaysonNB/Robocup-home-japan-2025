@@ -38,8 +38,9 @@ id_list = [11, 13, 15, 14, 12, 1, 2]
 print('robot arm')
 Ro.open_robotic_arm("/dev/arm", id_list, Dy)
 
-#Ro.go_to_real_xyz_alpha(id_list, (0, 125, 80), 0, 0, 90, 1, Dy)
-#time.sleep(2.0)
+
+# Ro.go_to_real_xyz_alpha(id_list, (0, 125, 80), 0, 0, 90, 1, Dy)
+# time.sleep(2.0)
 
 # gemini2
 def callback_image2(msg):
@@ -134,7 +135,7 @@ def move(forward_speed: float = 0, turn_speed: float = 0):
 
 
 def post_message_request(step, s1, question):
-    api_url = "http://192.168.60.48:8888/Fambot"
+    api_url = "http://192.168.60.20:8888/Fambot"
     my_todo = {"Question1": "None",
                "Question2": "None",
                "Question3": "None",
@@ -325,6 +326,7 @@ def highlightFace(net, frame, conf_threshold=0.7):
             cv2.rectangle(frameOpencvDnn, (x1, y1), (x2, y2), (0, 255, 0), int(round(frameHeight / 150)), 8)
     return frameOpencvDnn, faceBoxes
 
+
 locations = {
     # Furniture and objects
     "counter": [-3.556, 0.986, 1.57],
@@ -334,25 +336,25 @@ locations = {
     "container": [-3.114, 1.49, 1.57],
     "left kachaka shelf": [-2.134, 1.145, 1.57],
     "right kachaka shelf": [-1.662, 1.114, 1.57],
-    "low table": [-2.61,1.166, -1.57],
+    "low table": [-2.61, 1.166, -1.57],
     "left chair": [-1.623, -1.582, -1.57],  #
     "right chair": [-2.334, -1.248, -1.57],  #
     "trash bin": [-4.442, 1.206, 1.57],  #
-    "tall table": [-1.699,1.542, -1.57],
+    "tall table": [-1.699, 1.542, -1.57],
     "left kachaka station": [-3.124, -2.026, -2.617],
     "right kachaka station": [-2.976, -1.794, 3.14],
     "shelf": [-2.884, -1.2, -1.57],
     # bed
-    "bed": [-0.410,-0.640,-0.663],
+    "bed": [-0.410, -0.640, -0.663],
     # dining room
     "dining table": [-0.491, 1.404, 0],
     "couch": [1.813, 0.339, 2.180],
 
     # Locations and special points
     "exit": [1.596, 1.729, 0],
-    "exit2": [2.888,-1.048, 0],
+    "exit2": [2.888, -1.048, 0],
     "entrance": [1.677, -1.070, 0],
-    "instruction point": [-4.024, -1.409,-1.638],
+    "instruction point": [-4.024, -1.409, -1.638],
     "dining room": [-0.921, 1.349, 0],
     "living room": [-2.927, 1.279, 0],
     "bedroom": [-0.014, -0.719, -0.185],
@@ -370,6 +372,7 @@ dining_room_dif = {
     "din1": [-0.833, 0.414, 1.568],
     "din2": [1.916, 2.449, -1.510]
 }
+
 
 # name
 # qestion list
@@ -443,10 +446,10 @@ if __name__ == "__main__":
     # Step 9 send image response text
     # step 10 get the image response
     gg = post_message_request("-1", "", "")
-    #speak("please say start, then I will go to the instruction point")
+    # speak("please say start, then I will go to the instruction point")
     step = "none"
     confirm_command = 0
-    #time.sleep(5)
+    # time.sleep(5)
     walk_to("instruction point")
     command_list = [
         "",
@@ -460,17 +463,17 @@ if __name__ == "__main__":
         "Tell me what is the thinnest object on the low table",
         "Tell me what is the heaviest object on the shelf"
     ]
-    commandcntcnt=0
+    commandcntcnt = 0
     for i in range(1, 10):
-        commandcntcnt=commandcntcnt+1
-        s=""
+        commandcntcnt = commandcntcnt + 1
+        s = ""
         dining_room_action = 0
         qr_code_detector = cv2.QRCodeDetector()
         data = ""
         speak("dear host please scan your qr code in front of my camera on top")
         yn = 0
         while True:
-            #print("step1")
+            # print("step1")
             if _frame2 is None: continue
             code_image = _frame2.copy()
             data, bbox, _ = qr_code_detector.detectAndDecode(code_image)
@@ -485,7 +488,7 @@ if __name__ == "__main__":
                 break
         cv2.destroyAllWindows()
         data = command_list[i]
-        #continue
+        # continue
 
         speak("dear host your command is")
         time.sleep(0.3)
@@ -494,7 +497,7 @@ if __name__ == "__main__":
         speak(str(data))
         print("********************")
         time.sleep(0.3)
-        s=""
+        s = ""
 
         user_input = data
         # post question
@@ -503,7 +506,7 @@ if __name__ == "__main__":
         # get gemini answer
         nigga = 1
         while True:
-            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
             response_data = r.text
             dictt = json.loads(response_data)
             if dictt["Steps"] == 1:
@@ -522,9 +525,9 @@ if __name__ == "__main__":
         Q3 = Q3.replace(" me", " you")
         print("My understanding for command", i)
         gg = post_message_request("-1", "", "")
-        #print("************************")
-        #speak(Q3)
-        #print("************************")
+        # print("************************")
+        # speak(Q3)
+        # print("************************")
         # say how the robot understand
         # speak(Q3[0])
         # divide
@@ -554,13 +557,13 @@ if __name__ == "__main__":
         uuu = data.lower()
         vd2_depth = 99999
         # room back up
-        questiong=""
+        questiong = ""
         if "$ROOM1" in liyt:
-            questiong=liyt["$ROOM1"].lower()
+            questiong = liyt["$ROOM1"].lower()
             if "dining room" in questiong:
                 dining_room_action = 1
         if "ROOM1" in liyt:
-            questiong=liyt["ROOM1"].lower()
+            questiong = liyt["ROOM1"].lower()
             if "dining room" in questiong:
                 dining_room_action = 1
         if "ROOM1" not in liyt and "$ROOM1" not in liyt and ("PLACE1" in liyt or "$PLACE1" in liyt):
@@ -607,9 +610,9 @@ if __name__ == "__main__":
             real_name = "tom"
         v2_turn_skip = 0
         speech2_turn_skip = 0
-        nav2_skip_cnt=0
-        none_cnt=0
-        followmecnt=0
+        nav2_skip_cnt = 0
+        none_cnt = 0
+        followmecnt = 0
         while not rospy.is_shutdown():
             # voice check
             # break
@@ -653,7 +656,7 @@ if __name__ == "__main__":
                     speak("getting now")
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, -8, 0, Dy)
-                    
+
                     time.sleep(3)
                     speak("I can't get it")
                     step_action = 2
@@ -736,7 +739,7 @@ if __name__ == "__main__":
                         cv2.imshow("capture_vision_(enumeration)1_img", image_flip)
                         cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.60.48:8888/upload_image"
+                    url = "http://192.168.60.20:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -749,7 +752,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -797,7 +800,7 @@ if __name__ == "__main__":
                     cv2.imshow("capture_vision_(descridption)1_img", image_flip)
                     cv2.imwrite(output_dir + "GSPR.jpg", image_flip)
                     # ask gemini
-                    url = "http://192.168.60.48:8888/upload_image"
+                    url = "http://192.168.60.20:8888/upload_image"
                     file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR.jpg"
                     with open(file_path, 'rb') as f:
                         files = {'image': (file_path.split('/')[-1], f)}
@@ -810,7 +813,7 @@ if __name__ == "__main__":
                     print(gg)
                     # get answer from gemini
                     while True:
-                        r = requests.get("http://192.168.60.48:8888/Fambot", timeout=2.5)
+                        r = requests.get("http://192.168.60.20:8888/Fambot", timeout=2.5)
                         response_data = r.text
                         dictt = json.loads(response_data)
                         if dictt["Steps"] == 10:
@@ -1015,7 +1018,7 @@ if __name__ == "__main__":
                             file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_color.jpg"
                             with open(file_path, 'rb') as f:
                                 files = {'image': (file_path.split('/')[-1], f)}
-                                url = "http://192.168.60.48:8888/upload_image"
+                                url = "http://192.168.60.20:8888/upload_image"
                                 response = requests.post(url, files=files)
                                 # remember to add the text question on the computer code
                             print("Upload Status Code:", response.status_code)
@@ -1027,7 +1030,7 @@ if __name__ == "__main__":
                             print(gg)
                             # get answer from gemini
                             while True:
-                                r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                                r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                                 response_data = r.text
                                 dictt = json.loads(response_data)
                                 if dictt["Steps"] == 12:
@@ -1173,7 +1176,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1184,7 +1187,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1300,7 +1303,8 @@ if __name__ == "__main__":
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
                         speak("hello dear " + real_name)
-                        speak("Look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak(
+                            "Look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1308,7 +1312,7 @@ if __name__ == "__main__":
                 if action == 1:
                     s = s.lower()
                     print("listening", s)
-                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s or step=="back":
+                    if "thank" in s or "you" in s or "stop" in s or "arrive" in s or "robot" in s or step == "back":
                         action = 0
                         step_action = 3
                         speak("I will go back now bye bye")
@@ -1349,10 +1353,10 @@ if __name__ == "__main__":
 
                         x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
                         print("turn_x_z:", x, z)
-                        if followmecnt>=1500:
-                            step="back"
-                            followmecnt=0
-                        followmecnt+=1
+                        if followmecnt >= 1500:
+                            step = "back"
+                            followmecnt = 0
+                        followmecnt += 1
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
@@ -1432,7 +1436,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1443,7 +1447,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1603,7 +1607,7 @@ if __name__ == "__main__":
                     day_of_month = now1.strftime("%d")
                     answer = "none"
                     if "move" in s or "way" in s:
-                        answer="Because you're holding my joystick."
+                        answer = "Because you're holding my joystick."
                     elif "correct" in s:
                         print("***************")
                         speak("It's spelled")
@@ -1612,7 +1616,7 @@ if __name__ == "__main__":
                         speak("b")
                         speak("o")
                         speak("t")
-                        answer="no need"
+                        answer = "no need"
                         print("***************")
                     elif "star" in s or "system" in s:
                         answer = "It is the Sun."
@@ -1726,7 +1730,7 @@ if __name__ == "__main__":
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/GSPR_people.jpg"
                         with open(file_path, 'rb') as f:
                             files = {'image': (file_path.split('/')[-1], f)}
-                            url = "http://192.168.60.48:8888/upload_image"
+                            url = "http://192.168.60.20:8888/upload_image"
                             response = requests.post(url, files=files)
                             # remember to add the text question on the computer code
                         print("Upload Status Code:", response.status_code)
@@ -1737,7 +1741,7 @@ if __name__ == "__main__":
                         print(gg)
                         # get answer from gemini
                         while True:
-                            r = requests.get("http://192.168.60.48:8888/Fambot", timeout=10)
+                            r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                             response_data = r.text
                             dictt = json.loads(response_data)
                             if dictt["Steps"] == 11:
@@ -1873,7 +1877,7 @@ if __name__ == "__main__":
                         speak("the current time is" + current_time)
                     else:
                         speak("the result of 3 plus 5 is 8")
-                    #elif "what the result of 3 plus 5 is" in s or ("3" in s and "5" in s and "plus" in s):
+                    # elif "what the result of 3 plus 5 is" in s or ("3" in s and "5" in s and "plus" in s):
                     #    speak("the result of 3 plus 5 is 8")
                     step_action = 3
                     print("***************")
