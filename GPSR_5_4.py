@@ -464,7 +464,7 @@ if __name__ == "__main__":
         "Tell me what is the heaviest object on the shelf"
     ]
     commandcntcnt = 0
-    for i in range(1, 4):
+    for i in range(5, 10):
         commandcntcnt = commandcntcnt + 1
         s = ""
         dining_room_action = 0
@@ -487,7 +487,7 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        #data = command_list[i]
+        data = command_list[i]
         # continue
 
         speak("dear host your command is")
@@ -531,8 +531,9 @@ if __name__ == "__main__":
         # say how the robot understand
         # speak(Q3[0])
         # divide
-        command_type = str(Q1[0])
+        command_type = str(Q1)
         command_type = command_type.lower()
+        print("final command",command_type)
         step_action = 0
         # continue
         liyt = Q2
@@ -611,6 +612,7 @@ if __name__ == "__main__":
         v2_turn_skip = 0
         speech2_turn_skip = 0
         nav2_skip_cnt = 0
+        speak_nack=0
         none_cnt = 0
         followmecnt = 0
         while not rospy.is_shutdown():
@@ -652,6 +654,7 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    cv2.imshow("man1", code_image)
                     time.sleep(2)
                     speak("getting now")
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
@@ -685,6 +688,7 @@ if __name__ == "__main__":
                         name_position = "PLACE1"
                     if name_position in liyt:
                         walk_to(liyt[name_position])
+                    cv2.imshow("man1", code_image)
                     time.sleep(2)
                     speak("getting now")
                     Ro.go_to_real_xyz_alpha(id_list, [0, 100, 200], -15, 0, 90, 0, Dy)
@@ -868,7 +872,7 @@ if __name__ == "__main__":
                     detections = dnn_yolo1.forward(code_image)[0]["det"]
                     # clothes_yolo
                     # nearest people
-                    nx = 3000
+                    nx = 1750
                     cx_n, cy_n = 0, 0
                     CX_ER = 99999
                     need_position = 0
@@ -1290,22 +1294,25 @@ if __name__ == "__main__":
                     if action == "speak":
                         speak("hello")
                         speak(real_name)
-                        speak("can u stand behind me and I will follow u now")
+                        #speak("can u stand behind me and I will follow u now")
                         time.sleep(2)
                         for i in range(78):
                             move(0, -0.35)
                             time.sleep(0.125)
                         if real_name == "guest":
-                            speak("dear guest please say robot you can stop")
+                            speak("dear guest please stand in front of me")
+                            speak("and remember to say robot you can stop")
                         else:
                             speak(real_name)
-                            speak("please say robot you can stop")
+                            speak("Please stand in front of me")
+                            speak("and remember to say robot you can stop")
                         # time.sleep(0.5)
                         speak("when you arrived and I will go back")
                         # time.sleep(0.5)
                         speak("hello dear " + real_name)
-                        speak(
-                            "Look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
+                        speak("I will start follow you now")
+                        #speak(
+                        #    "Look at me and please walk but don't walk too fast, and remember to say robot stop when you arrived thank you")
                         action = 1
                         step = "none"
                         step_action = 2
@@ -1354,10 +1361,20 @@ if __name__ == "__main__":
 
                         x, z, code_image, yn = _fw.calc_cmd_vel(code_image, code_depth, cx, cy)
                         print("turn_x_z:", x, z)
-                        if followmecnt >= 1500:
-                            step = "back"
-                            followmecnt = 0
+                        
+                    if x==0 and z==0:
+                        if speak_nack>=20:
+                            speak("don't walk too fast, pleae come back")
+                            speak_nack=0
+                        speak_nack+=1
                         followmecnt += 1
+                    else:
+                        followmecnt = 0
+                    if followmecnt >= 150:
+                        step = "back"
+                        speak("I cna't find you I gonna go back now")
+                        followmecnt = 0
+                    print("follow",followmecnt)
                     move(x, z)
                 if step_action == 3:
                     step_action = 100
@@ -1889,7 +1906,7 @@ if __name__ == "__main__":
                     speak("I will go back now bye bye")
                     step_action = 100
             else:
-                speak("I can't do it, please take the next command please")
+                speak("please scan it again")
                 break
         walk_to("instruction point")
         print("***************")
