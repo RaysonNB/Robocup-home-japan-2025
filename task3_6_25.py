@@ -258,8 +258,25 @@ dining_room_dif = {
     "din1": [-1.545, -0.303, 1.57],
     "din2": [1.214, 1.960, -1.57]  ##
 }
-
-
+def hand_turn_left():
+    say("robot arm turn left")
+def seat_turn(num12):
+    check_num=str(num12)
+    angle1 = -75
+    angle2 = -30
+    angle3 = 0
+    angle4 = 30
+    angle5 = 75
+    if "1" in check_num:
+        turn(angle1)
+    elif "2" in check_num:
+        turn(angle2)
+    elif "3" in check_num:
+        turn(angle3)
+    elif "4" in check_num:
+        turn(angle4)
+    elif "5" in check_num:
+        turn(angle5)
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
@@ -307,6 +324,7 @@ if __name__ == "__main__":
     for nigga_i in [1,2]:
         check_cnt=0
         walk_to("guest")
+        speak("hello dear guest, can u stand one meters in front of me, thank you")
         while not rospy.is_shutdown():
             now1 = datetime.now()
             current_time = now1.strftime("%H:%M:%S")
@@ -325,6 +343,7 @@ if __name__ == "__main__":
             cv2.imshow("frame", code_image)
 
             if step=="fp":
+
                 code_image = _frame2.copy()
                 mx1, my1, mx2, my2 = 0,0,0,0
                 detections = dnn_yolo1.forward(code_image)[0]["det"]
@@ -341,7 +360,7 @@ if __name__ == "__main__":
                 face_box = [mx1, my1, mx2, my2]
                 box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                 output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                file_name="host"+str(nigga_i)
+                file_name="guest"+str(nigga_i)
                 cv2.imwrite(output_dir + file_name, box_roi)
                 if check_cnt>=5:
                     step="name"
@@ -436,8 +455,8 @@ if __name__ == "__main__":
             if step=="walk":
 
                 walk_to("seats")
-                speak("dear guest, please don't stand in front of me, it is better to stand next to me, thank you")
-                time.sleep(0.5)
+                speak("dear guest, can u stand on my left side, thank you")
+                time.sleep(2)
                 check_empty_img=_frame2.copy()
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 1.5
@@ -474,9 +493,16 @@ if __name__ == "__main__":
                 print("sent image")
                 number=5-nigga_i
                 who_help = "which number of sit is empty, there should be " + str(number) + " numbers" #correct the numbers**********************
-                gg = post_message_request("checkempty", feature, who_help)
+                gg = post_message_request("task3", feature, who_help)
                 print(gg)
+                host_seat="0"
+                if "1" not in str(gg): host_seat="1"
+                if "2" not in str(gg): host_seat="2"
+                if "3" not in str(gg): host_seat="3"
+                if "4" not in str(gg): host_seat="4"
+                if "5" not in str(gg): host_seat="5"
                 step = "waitempty"
+
             if step=="waitempty":
                 r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                 response_data = r.text
@@ -488,29 +514,9 @@ if __name__ == "__main__":
                     print("answer:", aaa)
                     speak(aaa)
                     confirm_seat=aaa
-                    step = "capture_hosts"
-            if step=="capture_hosts" and nigga_i==2:
+                    step = "go_hosts"
+            if step=="go_hosts":
                 step = "tell"
-            if step=="capture_hosts" and nigga_i==1:
-                min_d=99999999
-                mx1, my1, mx2, my2=0,0,0,0
-                detections = dnn_yolo1.forward(code_image)[0]["det"]
-                for i, detection in enumerate(detections):
-                    # print(detection)
-                    x1, y1, x2, y2, _, class_id = map(int, detection)
-                    score = detection[4]
-                    cx = (x2 - x1) // 2 + x1
-                    cy = (y2 - y1) // 2 + y1
-                    _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    if score > 0.65 and class_id == 0 and d != 0 and d <= 2500 and d<=min_d:
-                        check_cnt += 1
-                        mx1, my1, mx2, my2 = x1, y1, x2, y2
-                        min_d=d
-                face_box = [mx1, my1, mx2, my2]
-                box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
-                output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                cv2.imwrite(output_dir + "host.jpg", box_roi)
-                step="tell"
             if step=="tell":
                 angle1=-75
                 angle2=-30
@@ -536,3 +542,4 @@ if __name__ == "__main__":
                 if check_tell_seat==1:
                     say("dear guest, here is your seat")
                 step="fp"
+        say("Receptionist end")
