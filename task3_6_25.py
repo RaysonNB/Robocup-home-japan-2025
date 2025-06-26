@@ -324,7 +324,14 @@ if __name__ == "__main__":
     for nigga_i in [1,2]:
         check_cnt=0
         walk_to("guest")
-        speak("hello dear guest, can u stand one meters in front of me, thank you")
+        time.sleep(1)
+        if nigga_i == 1:
+            speak("hello dear guest, can u stand one meter in front of me, i will take you a picture, thank you")
+        else:
+            speak("hello dear guest, can u stand in front of me, i will take you a picture, thank you")
+        speak("My name is Fambot, please answer my following questions with louder voice, thank you")
+        if nigga_i == 2:
+            step="name"
         while not rospy.is_shutdown():
             now1 = datetime.now()
             current_time = now1.strftime("%H:%M:%S")
@@ -339,14 +346,41 @@ if __name__ == "__main__":
                 print("no depth")
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
-            catch_image = _frame1.copy()
             cv2.imshow("frame", code_image)
-
             if step=="fp":
-
+                code_image = _frame2.copy()
+                poses = net_pose.forward(code_image)
+                yu = 0
+                ay = 0
+                A = []
+                time.sleep(0.1)
+                if len(poses) > 0:
+                    YN = -1
+                    a_num = 5
+                    for issack in range(len(poses)):
+                        yu = 0
+                        if poses[issack][5][2] > 0:
+                            YN = 0
+                            a_num, b_num = 5, 5
+                            A = list(map(int, poses[issack][a_num][:2]))
+                            if (640 >= A[0] >= 0 and 320 >= A[1] >= 0):
+                                ax, ay, az = get_real_xyz(code_depth, A[0], A[1], 2)
+                                print(ax, ay)
+                                if az <= 2500 and az != 0:
+                                    yu += 1
+                        if yu >= 1:
+                            break
+                if len(A) != 0 and yu >= 1:
+                    cv2.circle(code_image, (A[0], A[1]), 3, (0, 255, 0), -1)
+                    target_y = ay
+                    print("your height is", (robot_height - target_y + 330) / 10.0)
+                    final_height = (robot_height - target_y + 330) / 10.0
+                    step_action = 2
+                    final_speak_to_guest = "the guys height is " + str(final_height) + " cm"
                 code_image = _frame2.copy()
                 mx1, my1, mx2, my2 = 0,0,0,0
-                detections = dnn_yolo1.forward(code_image)[0]["det"]
+                detections = dnn_yolo1.forward(_frame2)[0]["det"]
+                yn=0
                 for i, detection in enumerate(detections):
                     # print(detection)
                     x1, y1, x2, y2, _, class_id = map(int, detection)
@@ -354,16 +388,31 @@ if __name__ == "__main__":
                     cx = (x2 - x1) // 2 + x1
                     cy = (y2 - y1) // 2 + y1
                     _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    if score > 0.65 and class_id == 0 and d!=0 and d<=1200:
+                    if score > 0.65 and class_id == 0 and d!=0 and 1000<=d<=1500:
                         check_cnt+=1
                         mx1, my1, mx2, my2 = x1, y1, x2, y2
+                        yn=1
+                if yn == 0:
+                    say("please step a bit backward")
                 face_box = [mx1, my1, mx2, my2]
                 box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                 output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
                 file_name="guest"+str(nigga_i)
+                promt_guest_feature= '''
+                question1: how old is the guy, give me a range
+                question2: he is male or female?
+                question3: what color of colthes he is wearing
+                
+                answer the question in complete sentence
+                entire_answer = question1 answer + question2 answer + question3 answer
+                just need one sentence
+                answer format: ******[entire_answer]******)
+                '''
+                #male, color, height, old
                 cv2.imwrite(output_dir + file_name, box_roi)
                 if check_cnt>=5:
                     step="name"
+                    say("it ends, you can stand in front of me, thank you")
             if step=="name":
                 #name, favorite drink, and a interest
                 name_cnt="none"
@@ -381,6 +430,7 @@ if __name__ == "__main__":
                 if "tom" in s: name_cnt = "tom"
                 if name_cnt !="none":
                     step="drink"
+                    name=name_cnt
             if step=="drink":
                 name_cnt = "none"
                 s = s.lower()
@@ -398,17 +448,18 @@ if __name__ == "__main__":
                     drink_name=name_cnt
                     step="interest"
             if step=="interest":
-                name_cnt = "none"
+                interest_name = "none"
                 s = s.lower()
                 speak("hello dear guest what is your interest")
-                if "art" in s: name_cnt = "art"
-                if "act" in s: name_cnt = "act"
-                if "animal" in s: name_cnt = "animals"
-                if "basketball" in s: name_cnt = "basketball"
-                if "football" in s: name_cnt = "football"
-                if "eat" in s: name_cnt = "eat"
-                if name_cnt != "none":
+                if "art" in s: interest_name = "art"
+                if "act" in s: interest_name = "act"
+                if "animal" in s: interest_name = "animals"
+                if "basketball" in s: interest_name = "basketball"
+                if "football" in s: interest_name = "football"
+                if "eat" in s: interest_name = "eat"
+                if interest_name != "none":
                     step = "drinktable"
+                    say("your name is " + name+" your favourite drink is "+drink_name+" your interest is "+interest_name)
             if step == "drinktable":
                 walk_to("drinktable")
                 step="gemini_drinks"
@@ -432,6 +483,8 @@ if __name__ == "__main__":
                 
                 you may answer your favourite drink isn't on the table or your favourite drink is in the ... position of the table
                 
+                answer format: ******[your speech]******
+                
                 '''
                 favhh="my friends favourite drink is "+ drink_name
                 gg = post_message_request("checkdrink", feature, who_help+favhh)
@@ -453,10 +506,9 @@ if __name__ == "__main__":
                     say(speaking_text)
                     step="walk"
             if step=="walk":
-
                 walk_to("seats")
-                speak("dear guest, can u stand on my left side, thank you")
-                time.sleep(2)
+                speak("dear guest, can u stand on my left left left side, thank you")
+                time.sleep(1)
                 check_empty_img=_frame2.copy()
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 1.5
@@ -491,18 +543,15 @@ if __name__ == "__main__":
                 print("Upload Status Code:", response.status_code)
                 upload_result = response.json()
                 print("sent image")
-                number=5-nigga_i
-                who_help = "which number of sit is empty, there should be " + str(number) + " numbers" #correct the numbers**********************
-                gg = post_message_request("task3", feature, who_help)
-                print(gg)
-                host_seat="0"
-                if "1" not in str(gg): host_seat="1"
-                if "2" not in str(gg): host_seat="2"
-                if "3" not in str(gg): host_seat="3"
-                if "4" not in str(gg): host_seat="4"
-                if "5" not in str(gg): host_seat="5"
+                if  nigga_i == 1:
+                    number=4
+                    who_help = "where have empty seat, just give me number in [1,2,3,4,5], there should be " +str(number)+ " numbers, answer format: ******[numbers]******" #correct the numbers**********************
+                    gg = post_message_request("task3", feature, who_help)
+                    print(gg)
+                elif nigga_i==2:
+                    gg = post_message_request("task3_2", feature, "")
+                    print(gg)
                 step = "waitempty"
-
             if step=="waitempty":
                 r = requests.get("http://192.168.60.20:8888/Fambot", timeout=10)
                 response_data = r.text
@@ -511,35 +560,50 @@ if __name__ == "__main__":
                 if dictt["Steps"] == 100:
                     gg = post_message_request("-1", "", "")
                     aaa = dictt["Voice"].lower()
-                    print("answer:", aaa)
-                    speak(aaa)
+                    if nigga_i == 1:
+                        host_seat = "0"
+                        if "1" not in str(gg): host_seat = "1"
+                        if "2" not in str(gg): host_seat = "2"
+                        if "3" not in str(gg): host_seat = "3"
+                        if "4" not in str(gg): host_seat = "4"
+                        if "5" not in str(gg): host_seat = "5"
+                        print("answer:", aaa)
+                    else:
+                        check=""
+                        if "1" not in str(gg): check+="1"
+                        if "2" not in str(gg): check+="2"
+                        if "3" not in str(gg): check+="3"
+                        if "4" not in str(gg): check+="4"
+                        if "5" not in str(gg): check+="5"
+                        guest1_seat=aaa #get bye gemini
+                        hosts_seat=check.replace(guest1_seat,"")
+                    #speak(aaa)
                     confirm_seat=aaa
-                    step = "go_hosts"
-            if step=="go_hosts":
-                step = "tell"
+                    step = "tell_hosts"
+            if step=="tell_hosts":
+                seat_turn(host_seat)
+                hand_turn_left()
+                host_name,host_drink_name,host_interest_name="john","milk","basketball"
+                if nigga_i == 1:
+                    speak("dear "+host_name+" this is the first guest "+name+" favourite drink is "+drink_name+" interest is "+interest_name)
+                    turn(-90) # the chassis left
+                    speak("dear "+name+" this is the host "+host_name+" favourite drink is "+host_drink_name+" interest is "+host_interest_name)
+                else:
+                    speak("dear " + host_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    turn(-90)  # the chassis left
+                    speak("dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
+                step="tell1"
+            if step=="tell1":
+                seat_turn(guest1_seat)
+                if nigga_i==2:
+                    say("dear "+pre_name +" this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    turn(-90)
+                    speak("dear " + name + " this is the first guest" + pre_name + " favourite drink is " + pre_drink + " interest is " + pre_interest)
+                    speak( )
+                step="tell"
             if step=="tell":
-                angle1=-75
-                angle2=-30
-                angle3=0
-                angle4=30
-                angle5=75
-                check_tell_seat=0
-                if "1" in confirm_seat:
-                    turn(angle1)
-                    check_tell_seat=1
-                elif "2" in confirm_seat:
-                    turn(angle2)
-                    check_tell_seat = 1
-                elif "3" in confirm_seat:
-                    turn(angle3)
-                    check_tell_seat = 1
-                elif "4" in confirm_seat:
-                    turn(angle4)
-                    check_tell_seat = 1
-                elif "5" in confirm_seat:
-                    turn(angle5)
-                    check_tell_seat = 1
-                if check_tell_seat==1:
-                    say("dear guest, here is your seat")
+                seat_turn(host_seat)
+                say("dear guest "+name+" the way I am facing is a empty seat, please have a sit, thank you")
+                pre_name,pre_drink,pre_interest=name,drink_name,interest_name
                 step="fp"
         say("Receptionist end")
