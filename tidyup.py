@@ -187,6 +187,31 @@ def main():
                 json_object = json.loads(json_string)
                 return json_object
 
+   def ask_gemini_for_bbox(text):
+        match = False
+        while True:
+            logger.info("Asking Gemini for objects")
+            frame = cam1.get_frame()
+            cv2.imwrite("./image.jpg", frame)
+            text = generate_content(f"Detect {text}. The box_2d should be [ymin, xmin, ymax, xmax] normalized to 0-1000.", "./image.jpg").get('generated_text')
+            if text is None:
+                respeaker.say("Failed")
+                continue
+            text = text.replace("\n", "")
+            text = text.replace("\r", "")
+            print("Gemini Res", text)
+    
+            bounding_boxes = json.loads(text)
+            converted_bounding_boxes = []
+            for bounding_box in bounding_boxes:
+                abs_y1 = int(bounding_box["box_2d"][0]/1000 * height)
+                abs_x1 = int(bounding_box["box_2d"][1]/1000 * width)
+                abs_y2 = int(bounding_box["box_2d"][2]/1000 * height)
+                abs_x2 = int(bounding_box["box_2d"][3]/1000 * width)
+                converted_bounding_boxes.append([abs_x1, abs_y1, abs_x2, abs_y2])
+
+            return converted_bounding_boxes
+
     def close_grip(grip_id):
         logger.info("Start Closing Grip")
         Dy.profile_velocity(grip_id, 20)
