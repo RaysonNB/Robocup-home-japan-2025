@@ -30,7 +30,6 @@ import os
 from datetime import datetime
 
 
-
 # gemini2
 def callback_image2(msg):
     global _frame2
@@ -45,7 +44,7 @@ def callback_depth2(msg):
 def callback_image1(msg):
     global _frame1
     src = CvBridge().imgmsg_to_cv2(msg, "bgr8")
-    _frame1=cv2.flip(src, 0)
+    _frame1 = cv2.flip(src, 0)
 
 
 def callback_depth1(msg):
@@ -170,31 +169,39 @@ def walk_to(name):
             speak("arrived")
             time.sleep(1)
             clear_costmaps
+
+
 def turn(angle):
     print("hi")
     if angle < 0:
         for i in range(-angle):
-            move(0,0.6)
+            move(0, 0.6)
             time.sleep(0.026)
     else:
         for i in range(angle):
-            move(0,0-.6)
+            move(0, 0 - .6)
             time.sleep(0.026)
+
+
 locations = {
     # Furniture and objects
     "seats": [-0.927, 0.086, 0.1],
     "guest": [1.193, 2.021, 1.53],
     "drinktable": [2.47, 3.36, -1.607],
 }
+
+
 def hand_turn_left():
     speak("robot arm turn left")
+
+
 def seat_turn(num12):
-    check_num=str(num12)
-    angle1 = -40
-    angle2 = -25
+    check_num = str(num12)
+    angle1 = -23
+    angle2 = -15
     angle3 = 0
-    angle4 = 25
-    angle5 = 40
+    angle4 = 15
+    angle5 = 23
     if "1" in check_num:
         turn(angle1)
     elif "2" in check_num:
@@ -205,12 +212,14 @@ def seat_turn(num12):
         turn(angle4)
     elif "5" in check_num:
         turn(angle5)
+
+
 if __name__ == "__main__":
     rospy.init_node("demo")
     rospy.loginfo("demo node start!")
     # open things
     chassis = RobotChassis()
-    
+
     print("cmd_vel")
     _cmd_vel = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
     # chassis = RobotChassis()
@@ -239,19 +248,19 @@ if __name__ == "__main__":
     robot_height = 1000
     gg = post_message_request("-1", "", "")
     step = "fp"
-    pre_s=""
+    pre_s = ""
     confirm_command = 0
-    for nigga_i in [1,2]:
-        check_cnt=0
+    for nigga_i in [1, 2]:
+        check_cnt = 0
         walk_to("guest")
-        #time.sleep(1)
+        # time.sleep(1)
         if nigga_i == 1:
             speak("hello dear guest, can u stand 2 meters in front of me, i will take you a picture")
             speak("please walk backward until the camera can see your face and shoulder")
         else:
             speak("hello dear guest, can u stand in front of me")
         if nigga_i == 2:
-            step="name"
+            step = "name"
         while not rospy.is_shutdown():
             now1 = datetime.now()
             current_time = now1.strftime("%H:%M:%S")
@@ -266,9 +275,9 @@ if __name__ == "__main__":
                 print("no depth")
             code_image = _frame2.copy()
             code_depth = _depth2.copy()
-            print("step",step)
-            if step=="fp":
-                robot_height=1170
+            print("step", step)
+            if step == "fp":
+                robot_height = 1170
                 code_image = _frame2.copy()
                 poses = net_pose.forward(code_image)
                 yu = 0
@@ -298,12 +307,12 @@ if __name__ == "__main__":
                     final_height = (robot_height - target_y + 330) / 10.0
                     step_action = 2
                     final_speak_to_guest = "the guest height is " + str(final_height) + " cm.  "
-                    step="fp1"
+                    step = "fp1"
             if step == "fp1":
                 code_image = _frame2.copy()
-                mx1, my1, mx2, my2 = 0,0,0,0
+                mx1, my1, mx2, my2 = 0, 0, 0, 0
                 detections = dnn_yolo1.forward(_frame2)[0]["det"]
-                yn=0
+                yn = 0
                 for i, detection in enumerate(detections):
                     # print(detection)
                     x1, y1, x2, y2, _, class_id = map(int, detection)
@@ -311,33 +320,33 @@ if __name__ == "__main__":
                     cx = (x2 - x1) // 2 + x1
                     cy = (y2 - y1) // 2 + y1
                     _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    if score > 0.65 and class_id == 0 and d!=0:
-                        if nigga_i==1 and 1500<=d<=1800:
-                            check_cnt+=1
+                    if score > 0.65 and class_id == 0 and d != 0:
+                        if nigga_i == 1 and 1500 <= d <= 1800:
+                            check_cnt += 1
                             mx1, my1, mx2, my2 = x1, y1, x2, y2
-                            yn=1
-                        elif nigga_i==1 and d<=1800:
-                            check_cnt+=1
+                            yn = 1
+                        elif nigga_i == 1 and d <= 1800:
+                            check_cnt += 1
                             mx1, my1, mx2, my2 = x1, y1, x2, y2
-                            yn=1
+                            yn = 1
                 if yn == 1:
                     if nigga_i == 1:
                         face_box = [mx1, my1, mx2, my2]
                         box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
                         output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                        file_name="guest1.jpg"
+                        file_name = "guest1.jpg"
 
-                        promt_guest_feature= '''
+                        promt_guest_feature = '''
                         question1: how old is the guy, give me a range
                         question2: he is male or female?
                         question3: what color of colthes he is wearing
-                        
+
                         answer the question in complete sentence
                         entire_answer = question1 answer + question2 answer + question3 answer
                         just need one sentence
                         answer format: ******[entire_answer]******) 
                         '''
-                        #male, color, height, old
+                        # male, color, height, old
                         cv2.imwrite(output_dir + file_name, box_roi)
                         file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/guest1.jpg"
                         with open(file_path, 'rb') as f:
@@ -349,14 +358,15 @@ if __name__ == "__main__":
                         upload_result = response.json()
                         print("sent image")
                         gg = post_message_request("guest1", "", "")
-                    step="name"
-                    speak("My name is Fambot, please stand in front of me and answer my following questions with louder voice, thank you")
+                    step = "name"
+                    speak(
+                        "My name is Fambot, please stand in front of me and answer my following questions with louder voice, thank you")
                     speak("hello dear guest what is your name")
-            if step=="name":
-                #name, favorite drink, and a interest
-                name_cnt="none"
+            if step == "name":
+                # name, favorite drink, and a interest
+                name_cnt = "none"
                 s = s.lower()
-                
+
                 if "charcoal" in s or "chicago" in s or "chikako" in s: name_cnt = "chikako"
                 if "yoshimura" in s or "shima" in s or "shi" in s or "tsushima" in s: name_cnt = "yoshimura"
                 if "basil" in s or "stac" in s or "stace" in s or "bas" in s or "basel" in s or "special" in s: name_cnt = "basil"
@@ -367,14 +377,14 @@ if __name__ == "__main__":
                 if "mike" in s: name_cnt = "mike"
                 if "leo" in s: name_cnt = "leo"
                 if "tom" in s: name_cnt = "tom"
-                if name_cnt !="none":
-                    step="drink"
-                    name=name_cnt
+                if name_cnt != "none":
+                    step = "drink"
+                    name = name_cnt
                     speak("hello dear guest what is your favourite drink")
-            if step=="drink":
+            if step == "drink":
                 name_cnt = "none"
                 s = s.lower()
-                
+
                 if "coffee" in s: name_cnt = "Coffee"
                 if "tea" in s: name_cnt = "Tea"
                 if "orangle" in s: name_cnt = "Orangle Juice"
@@ -385,13 +395,13 @@ if __name__ == "__main__":
                 if "wine" in s: name_cnt = "wine"
                 if "beer" in s: name_cnt = "beer"
                 if name_cnt != "none":
-                    drink_name=name_cnt
-                    step="interest"
+                    drink_name = name_cnt
+                    step = "interest"
                     speak("hello dear guest what is your interest")
-            if step=="interest":
+            if step == "interest":
                 interest_name = "none"
                 s = s.lower()
-                
+
                 if "art" in s: interest_name = "art"
                 if "act" in s: interest_name = "act"
                 if "animal" in s: interest_name = "animals"
@@ -400,14 +410,14 @@ if __name__ == "__main__":
                 if "eat" in s: interest_name = "eat"
                 if interest_name != "none":
                     step = "drinktable"
-                    speakooo="your name is " + name + " your favourite drink is " + drink_name + " your interest is "+interest_name
+                    speakooo = "your name is " + name + " your favourite drink is " + drink_name + " your interest is " + interest_name
                     print(speakooo)
                     speak(speakooo)
             if step == "drinktable":
                 speak("dear guest i will bring you to the drink table")
                 walk_to("drinktable")
-                step="gemini_drinks"
-            if step=="gemini_drinks":
+                step = "gemini_drinks"
+            if step == "gemini_drinks":
                 output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
                 box_roi = _frame1.copy()
                 cv2.imwrite(output_dir + "task3.jpg", box_roi)
@@ -422,21 +432,21 @@ if __name__ == "__main__":
                 print("sent image")
                 who_help = '''
                 now, you are going to find guest favourite drink on this table(the image).
-                
+
                 tell me where is guest favourite drink with definite position on the table.
-                
+
                 you may answer your favourite drink isn't on the table or your favourite drink is in the ... position of the table
-                
+
                 answer format: ******[dear guest your favourite drink is......]******
-                
-                
+
+
                 '''
-                favhh= " guest favourite drink is "+ drink_name
-                gg = post_message_request("task3", "", who_help+favhh)
+                favhh = " guest favourite drink is " + drink_name
+                gg = post_message_request("task3", "", who_help + favhh)
                 print(gg)
-                step="waitdrink"
+                step = "waitdrink"
                 # get answer from gemini
-            if step=="waitdrink":
+            if step == "waitdrink":
                 r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
                 response_data = r.text
                 dictt = json.loads(response_data)
@@ -447,20 +457,20 @@ if __name__ == "__main__":
                     print("answer:", aaa)
                     speak(aaa)
                     time.sleep(1)
-                    speaking_text="dear guest, please follow me to the seat"
+                    speaking_text = "dear guest, please follow me to the seat"
                     speak(speaking_text)
-                    step="walk"
-            if step=="walk":
+                    step = "walk"
+            if step == "walk":
                 walk_to("seats")
                 speak("dear guest, can u stand on my left left left side, thank you")
                 time.sleep(1)
-                check_empty_img=_frame1.copy()
+                check_empty_img = _frame1.copy()
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 1.5
                 font_color = (255, 255, 255)
                 font_thickness = 5
-                width=640
-                height=320
+                width = 640
+                height = 320
                 # correct the numbers**********************
                 positions = {
                     1: (int(width * 0.08), int(height * 0.4)),
@@ -479,8 +489,8 @@ if __name__ == "__main__":
                                 cv2.LINE_AA)
                 output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
                 cv2.imwrite(output_dir + "emptyseat.jpg", check_empty_img)
-                step="askempty"
-            if step=="askempty":
+                step = "askempty"
+            if step == "askempty":
                 file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/emptyseat.jpg"
                 with open(file_path, 'rb') as f:
                     files = {'image': (file_path.split('/')[-1], f)}
@@ -490,16 +500,16 @@ if __name__ == "__main__":
                 print("Upload Status Code:", response.status_code)
                 upload_result = response.json()
                 print("sent image")
-                if  nigga_i == 1:
-                    number=4
-                    who_help = "here have 5 seats where have empty seat(chair), just give me number in [1,2,3,4,5], there should be " +str(number)+ " numbers, answer format: ******[numbers]******, for example ******[1,2,3,4]******" #correct the numbers**********************
+                if nigga_i == 1:
+                    number = 4
+                    who_help = "here have 5 seats please tell me where have empty seat(chair), just give me number in [1,2,3,4,5], there should be " + str(number) + " numbers, answer format: ******[numbers]******, for example ******[1,2,3,4]******"  # correct the numbers**********************
                     gg = post_message_request("seat1", "", who_help)
                     print(gg)
-                elif nigga_i==2:
+                elif nigga_i == 2:
                     gg = post_message_request("seat2", "", "")
                     print(gg)
                 step = "waitempty"
-            if step=="waitempty":
+            if step == "waitempty":
                 r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
                 response_data = r.text
                 dictt = json.loads(response_data)
@@ -507,46 +517,57 @@ if __name__ == "__main__":
                 if dictt["Steps"] == 101:
                     gg = post_message_request("-1", "", "")
                     aaa = dictt["Voice"].lower()
-                    seat_list=gg
+                    aab = dictt["answer"].lower()
+                    seat_list = aaa
                     if nigga_i == 1:
                         host_seat = "0"
-                        if "1" not in str(gg): host_seat = "1"
-                        if "2" not in str(gg): host_seat = "2"
-                        if "3" not in str(gg): host_seat = "3"
-                        if "4" not in str(gg): host_seat = "4"
-                        if "5" not in str(gg): host_seat = "5"
+                        if "1" not in str(aaa): host_seat = "1"
+                        if "2" not in str(aaa): host_seat = "2"
+                        if "3" not in str(aaa): host_seat = "3"
+                        if "4" not in str(aaa): host_seat = "4"
+                        if "5" not in str(aaa): host_seat = "5"
                         print("answer:", aaa)
                     else:
-                        check=""
-                        if "1" not in str(gg): check+="1"
-                        if "2" not in str(gg): check+="2"
-                        if "3" not in str(gg): check+="3"
-                        if "4" not in str(gg): check+="4"
-                        if "5" not in str(gg): check+="5"
-                        guest1_seat=aaa #get by gemini
-                        hosts_seat=check.replace(guest1_seat,"")
-                    #speak(aaa)
-                    confirm_seat=aaa
+                        check = ""
+                        if "1" not in str(aab): check += "1"
+                        if "2" not in str(aab): check += "2"
+                        if "3" not in str(aab): check += "3"
+                        if "4" not in str(aab): check += "4"
+                        if "5" not in str(aab): check += "5"
+                        check1=""
+                        if "1" in str(aaa): check1= "1"
+                        if "2" in str(aaa): check1= "2"
+                        if "3" in str(aaa): check1= "3"
+                        if "4" in str(aaa): check1= "4"
+                        if "5" in str(aaa): check1= "5"
+                        guest1_seat = check1  # get by gemini
+                        hosts_seat = check.replace(guest1_seat, "")
+                    # speak(aaa)
+                    confirm_seat = aaa
                     step = "tell_hosts"
-            if step=="tell_hosts":
+            if step == "tell_hosts":
                 seat_turn(host_seat)
-                hand_turn_left()
-                host_name,host_drink_name,host_interest_name="johnny nigga ","milk ","football "
+                host_name, host_drink_name, host_interest_name = "john", "milk ", "football "
                 if nigga_i == 1:
-                    speak("dear "+host_name+" this is the first guest "+name+" favourite drink is "+drink_name+" interest is "+interest_name)
-                    turn(-90) # the chassis left
-                    speak("dear "+name+" this is the host "+host_name+" favourite drink is "+host_drink_name+" interest is "+host_interest_name)
-                else:
-                    speak("dear " + host_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    speak(
+                        "dear " + host_name + " this is the first guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
                     turn(-90)  # the chassis left
-                    speak("dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
-                step="tell1"
-            if step=="tell1":
-                
-                if nigga_i==2:
+                    speak(
+                        "dear " + name + " this is the host " + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
+                else:
+                    speak(
+                        "dear " + host_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    turn(-90)  # the chassis left
+                    speak(
+                        "dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
+                step = "tell1"
+            if step == "tell1":
+
+                if nigga_i == 2:
                     seat_turn(guest1_seat)
-                    speak("dear "+pre_name +" this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
-                    turn(-90) #chassis left
+                    speak(
+                        "dear " + pre_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    turn(-90)  # chassis left
                     gg = post_message_request("feature", "", "")
                     while True:
                         r = requests.get("http://192.168.50.147:8888/Fambot", timeout=10)
@@ -558,19 +579,25 @@ if __name__ == "__main__":
                             aaa = dictt["Voice"].lower()
                             speech_robot_guest2 = final_speak_to_guest + aaa
                             break
-                    speak("dear " + name + " this is the first guest" + pre_name + " favourite drink is " + pre_drink + " interest is " + pre_interest)
+                    speak(
+                        "dear " + name + " this is the first guest" + pre_name + " favourite drink is " + pre_drink + " interest is " + pre_interest)
                     speak(speech_robot_guest2)
-                step="tell"
-            if step=="tell":
-                if "1" in seat_list: seat_turn("1")
-                elif "2" in seat_list: seat_turn("2")
-                elif "3" in seat_list: seat_turn("3")
-                elif "4" in seat_list: seat_turn("4")
-                elif "5" in seat_list: seat_turn("5")
-                print("seat_list",seat_list)
-                speak("dear guest "+name+" the way I am facing is a empty seat, please have a sit")
-                pre_name,pre_drink,pre_interest=name,drink_name,interest_name
-                step="fp"
+                step = "tell"
+            if step == "tell":
+                if "1" in seat_list:
+                    seat_turn("1")
+                elif "2" in seat_list:
+                    seat_turn("2")
+                elif "3" in seat_list:
+                    seat_turn("3")
+                elif "4" in seat_list:
+                    seat_turn("4")
+                elif "5" in seat_list:
+                    seat_turn("5")
+                print("seat_list", seat_list)
+                speak("dear guest " + name + " the way I am facing is a empty seat, please have a sit")
+                pre_name, pre_drink, pre_interest = name, drink_name, interest_name
+                step = "fp"
                 break
             cv2.imshow("frame", code_image)
             key = cv2.waitKey(1)
