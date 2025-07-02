@@ -44,7 +44,8 @@ def callback_depth2(msg):
 
 def callback_image1(msg):
     global _frame1
-    _frame1 = CvBridge().imgmsg_to_cv2(msg, "bgr8")
+    src = CvBridge().imgmsg_to_cv2(msg, "bgr8")
+    _frame1=cv2.flip(src, 0)
 
 
 def callback_depth1(msg):
@@ -183,7 +184,7 @@ locations = {
     # Furniture and objects
     "seats": [-0.927, 0.086, 0.1],
     "guest": [1.193, 2.021, 1.53],
-    "drinktable": [3.217, 3.167, -1.607],
+    "drinktable": [2.47, 3.36, -1.607],
 }
 def hand_turn_left():
     speak("robot arm turn left")
@@ -243,7 +244,7 @@ if __name__ == "__main__":
     for nigga_i in [1,2]:
         check_cnt=0
         walk_to("guest")
-        time.sleep(1)
+        #time.sleep(1)
         if nigga_i == 1:
             speak("hello dear guest, can u stand 2 meters in front of me, i will take you a picture")
             speak("please walk backward until the camera can see your face and shoulder")
@@ -267,7 +268,7 @@ if __name__ == "__main__":
             code_depth = _depth2.copy()
             print("step",step)
             if step=="fp":
-                robot_height=1250
+                robot_height=1170
                 code_image = _frame2.copy()
                 poses = net_pose.forward(code_image)
                 yu = 0
@@ -310,38 +311,44 @@ if __name__ == "__main__":
                     cx = (x2 - x1) // 2 + x1
                     cy = (y2 - y1) // 2 + y1
                     _, _, d = get_real_xyz(code_depth, cx, cy, 2)
-                    if score > 0.65 and class_id == 0 and d!=0 and 1500<=d<=1800:
-                        check_cnt+=1
-                        mx1, my1, mx2, my2 = x1, y1, x2, y2
-                        yn=1
+                    if score > 0.65 and class_id == 0 and d!=0:
+                        if nigga_i==1 and 1500<=d<=1800:
+                            check_cnt+=1
+                            mx1, my1, mx2, my2 = x1, y1, x2, y2
+                            yn=1
+                        elif nigga_i==1 and d<=1800:
+                            check_cnt+=1
+                            mx1, my1, mx2, my2 = x1, y1, x2, y2
+                            yn=1
                 if yn == 1:
-                    face_box = [mx1, my1, mx2, my2]
-                    box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
-                    output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
-                    file_name="guest1.jpg"
+                    if nigga_i == 1:
+                        face_box = [mx1, my1, mx2, my2]
+                        box_roi = _frame2[face_box[1]:face_box[3] - 1, face_box[0]:face_box[2] - 1, :]
+                        output_dir = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/"
+                        file_name="guest1.jpg"
 
-                    promt_guest_feature= '''
-                    question1: how old is the guy, give me a range
-                    question2: he is male or female?
-                    question3: what color of colthes he is wearing
-                    
-                    answer the question in complete sentence
-                    entire_answer = question1 answer + question2 answer + question3 answer
-                    just need one sentence
-                    answer format: ******[entire_answer]******) 
-                    '''
-                    #male, color, height, old
-                    cv2.imwrite(output_dir + file_name, box_roi)
-                    file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/guest1.jpg"
-                    with open(file_path, 'rb') as f:
-                        files = {'image': (file_path.split('/')[-1], f)}
-                        url = "http://192.168.50.147:8888/upload_image"
-                        response = requests.post(url, files=files)
-                        # remember to add the text question on the computer code
-                    print("Upload Status Code:", response.status_code)
-                    upload_result = response.json()
-                    print("sent image")
-                    gg = post_message_request("guest1", "", "")
+                        promt_guest_feature= '''
+                        question1: how old is the guy, give me a range
+                        question2: he is male or female?
+                        question3: what color of colthes he is wearing
+                        
+                        answer the question in complete sentence
+                        entire_answer = question1 answer + question2 answer + question3 answer
+                        just need one sentence
+                        answer format: ******[entire_answer]******) 
+                        '''
+                        #male, color, height, old
+                        cv2.imwrite(output_dir + file_name, box_roi)
+                        file_path = "/home/pcms/catkin_ws/src/beginner_tutorials/src/m1_evidence/guest1.jpg"
+                        with open(file_path, 'rb') as f:
+                            files = {'image': (file_path.split('/')[-1], f)}
+                            url = "http://192.168.50.147:8888/upload_image"
+                            response = requests.post(url, files=files)
+                            # remember to add the text question on the computer code
+                        print("Upload Status Code:", response.status_code)
+                        upload_result = response.json()
+                        print("sent image")
+                        gg = post_message_request("guest1", "", "")
                     step="name"
                     speak("My name is Fambot, please stand in front of me and answer my following questions with louder voice, thank you")
                     speak("hello dear guest what is your name")
@@ -420,10 +427,11 @@ if __name__ == "__main__":
                 
                 you may answer your favourite drink isn't on the table or your favourite drink is in the ... position of the table
                 
-                answer format: ******[your speech]******
+                answer format: ******[dear guest your favourite drink is......]******
+                
                 
                 '''
-                favhh= name +" favourite drink is "+ drink_name
+                favhh= " guest favourite drink is "+ drink_name
                 gg = post_message_request("task3", "", who_help+favhh)
                 print(gg)
                 step="waitdrink"
@@ -446,7 +454,7 @@ if __name__ == "__main__":
                 walk_to("seats")
                 speak("dear guest, can u stand on my left left left side, thank you")
                 time.sleep(1)
-                check_empty_img=_frame2.copy()
+                check_empty_img=_frame1.copy()
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 1.5
                 font_color = (255, 255, 255)
@@ -484,7 +492,7 @@ if __name__ == "__main__":
                 print("sent image")
                 if  nigga_i == 1:
                     number=4
-                    who_help = "where have empty seat, just give me number in [1,2,3,4,5], there should be " +str(number)+ " numbers, answer format: ******[numbers]******" #correct the numbers**********************
+                    who_help = "here have 5 seats where have empty seat(chair), just give me number in [1,2,3,4,5], there should be " +str(number)+ " numbers, answer format: ******[numbers]******, for example ******[1,2,3,4]******" #correct the numbers**********************
                     gg = post_message_request("seat1", "", who_help)
                     print(gg)
                 elif nigga_i==2:
@@ -523,7 +531,7 @@ if __name__ == "__main__":
             if step=="tell_hosts":
                 seat_turn(host_seat)
                 hand_turn_left()
-                host_name,host_drink_name,host_interest_name="john","milk","basketball"
+                host_name,host_drink_name,host_interest_name="johnny nigga ","milk ","football "
                 if nigga_i == 1:
                     speak("dear "+host_name+" this is the first guest "+name+" favourite drink is "+drink_name+" interest is "+interest_name)
                     turn(-90) # the chassis left
@@ -534,8 +542,9 @@ if __name__ == "__main__":
                     speak("dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
                 step="tell1"
             if step=="tell1":
-                seat_turn(guest1_seat)
+                
                 if nigga_i==2:
+                    seat_turn(guest1_seat)
                     speak("dear "+pre_name +" this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
                     turn(-90) #chassis left
                     gg = post_message_request("feature", "", "")
@@ -558,9 +567,11 @@ if __name__ == "__main__":
                 elif "3" in seat_list: seat_turn("3")
                 elif "4" in seat_list: seat_turn("4")
                 elif "5" in seat_list: seat_turn("5")
+                print("seat_list",seat_list)
                 speak("dear guest "+name+" the way I am facing is a empty seat, please have a sit")
                 pre_name,pre_drink,pre_interest=name,drink_name,interest_name
                 step="fp"
+                break
             cv2.imshow("frame", code_image)
             key = cv2.waitKey(1)
             if key in [ord('q'), 27]:
