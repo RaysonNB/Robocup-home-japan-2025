@@ -114,6 +114,8 @@ def speak1(g):
     # rospy.loginfo(g)
     print(g)
     time.sleep(0.3)
+
+
 def speak(g):
     print("[robot say]:", end=" ")
     os.system(f'espeak -s 140 "{g}"')
@@ -221,6 +223,8 @@ def seat_turn(num12):
     elif "5" in check_num:
         turn(angle5)
     time.sleep(1)
+
+
 def seat_turn_back(num12):
     check_num = str(num12)
     angle1 = 3
@@ -276,18 +280,17 @@ if __name__ == "__main__":
     gg = post_message_request("-1", "", "")
     step = "fp"
     pre_s = ""
-    
+
     confirm_command = 0
     for nigga_i in [1, 2]:
         check_cnt = 0
         walk_to("guest")
-        # time.sleep(1)
         if nigga_i == 1:
             speak1("hello dear guest, can u stand 2 meters in front of me, i will take you a picture")
             speak1("please walk backward until the camera can see your face and shoulder")
         if nigga_i == 2:
             step = "name"
-        say_cnt=0
+        say_cnt = 0
         while not rospy.is_shutdown():
             now1 = datetime.now()
             current_time = now1.strftime("%H:%M:%S")
@@ -386,16 +389,16 @@ if __name__ == "__main__":
                         print("sent image")
                         gg = post_message_request("guest1", "", "")
                     step = "name"
-                    
+
             if step == "name":
                 # name, favorite drink, and a interest
                 name_cnt = "none"
                 s = s.lower()
-                if say_cnt==0:
+                if say_cnt == 0:
                     speak1(
                         "My name is Fambot, please stand in front of me and answer my following questions with louder voice, thank you")
                     speak1("hello dear guest what is your name")
-                    say_cnt+=1
+                    say_cnt += 1
                 if "charcoal" in s or "chicago" in s or "chikako" in s: name_cnt = "chikako"
                 if "yoshimura" in s or "shima" in s or "shi" in s or "tsushima" in s: name_cnt = "yoshimura"
                 if "basil" in s or "stac" in s or "stace" in s or "bas" in s or "basel" in s or "special" in s: name_cnt = "basil"
@@ -442,7 +445,7 @@ if __name__ == "__main__":
                     speakooo = "your name is " + name + " your favourite drink is " + drink_name + " your interest is " + interest_name
                     print(speakooo)
                     speak1(speakooo)
-                    s=""
+                    s = ""
             if step == "drinktable":
                 speak1("dear guest i will bring you to the drink table")
                 walk_to("drinktable")
@@ -532,7 +535,8 @@ if __name__ == "__main__":
                 print("sent image")
                 if nigga_i == 1:
                     number = 4
-                    who_help = "here have 5 seats please tell me where have empty seat(chair), just give me number in [1,2,3,4,5], there should be " + str(number) + " numbers, answer format: ******[numbers]******, for example ******[1,2,3,4]******"  # correct the numbers**********************
+                    who_help = "here have 5 seats please tell me where have empty seat(chair), just give me number in [1,2,3,4,5], there should be " + str(
+                        number) + " numbers, answer format: ******[numbers]******, for example ******[1,2,3,4]******"  # correct the numbers**********************
                     gg = post_message_request("seat1", "", who_help)
                     print(gg)
                 elif nigga_i == 2:
@@ -567,12 +571,12 @@ if __name__ == "__main__":
                         if "3" not in str(aab): check += "3"
                         if "4" not in str(aab): check += "4"
                         if "5" not in str(aab): check += "5"
-                        check1=""
-                        if "1" in str(aaa): check1= "1"
-                        if "2" in str(aaa): check1= "2"
-                        if "3" in str(aaa): check1= "3"
-                        if "4" in str(aaa): check1= "4"
-                        if "5" in str(aaa): check1= "5"
+                        check1 = ""
+                        if "1" in str(aaa): check1 = "1"
+                        if "2" in str(aaa): check1 = "2"
+                        if "3" in str(aaa): check1 = "3"
+                        if "4" in str(aaa): check1 = "4"
+                        if "5" in str(aaa): check1 = "5"
                         guest1_seat = check1  # get by gemini
                         hosts_seat = check.replace(guest1_seat, "")
                     # speak(aaa)
@@ -583,31 +587,25 @@ if __name__ == "__main__":
                 time.sleep(1)
                 host_name, host_drink_name, host_interest_name = "john", "milk ", "football "
                 if nigga_i == 1:
-                    speak(
-                        "dear " + host_name + " this is the first guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    speak("dear " + host_name + " this is the first guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
                     seat_turn_back(host_seat)
                     turn(-90)  # the chassis left
                     time.sleep(1)
-                    speak(
-                        "dear " + name + " this is the host " + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
+                    speak("dear " + name + " this is the host " + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
                     turn(90)
                 else:
-                    speak(
-                        "dear " + host_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    speak("dear " + host_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
                     seat_turn_back(host_seat)
                     turn(-90)  # the chassis left
                     time.sleep(1)
-                    speak(
-                        "dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
+                    speak("dear " + name + " this is the host" + host_name + " favourite drink is " + host_drink_name + " interest is " + host_interest_name)
                     turn(90)
                 step = "tell1"
             if step == "tell1":
-
                 if nigga_i == 2:
                     seat_turn(guest1_seat)
                     time.sleep(1)
-                    speak(
-                        "dear " + pre_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
+                    speak("dear " + pre_name + " this is the second guest " + name + " favourite drink is " + drink_name + " interest is " + interest_name)
                     seat_turn_back(guest1_seat)
                     turn(-90)  # chassis left
                     gg = post_message_request("feature", "", "")
@@ -621,10 +619,8 @@ if __name__ == "__main__":
                             aaa = dictt["Voice"].lower()
                             speech_robot_guest2 = final_speak_to_guest + aaa
                             break
-                    
-                    speak(
-                        "dear " + name + " this is the first guest " + pre_name + " favourite drink is " + pre_drink + " interest is " + pre_interest)
-                    time.sleep(1)
+                    speak("dear " + name + " this is the first guest " + pre_name + " favourite drink is " + pre_drink + " interest is " + pre_interest)
+                    time.sleep(0.5)
                     speak("here are the feature")
                     speak(speech_robot_guest2)
                     turn(90)
@@ -640,7 +636,7 @@ if __name__ == "__main__":
                     seat_turn("4")
                 elif "5" in seat_list:
                     seat_turn("5")
-                time.sleep(1)
+                time.sleep(0.5)
                 print("seat_list", seat_list)
                 speak("dear guest " + name + " the way I am facing is a empty seat, please have a sit")
                 pre_name, pre_drink, pre_interest = name, drink_name, interest_name
